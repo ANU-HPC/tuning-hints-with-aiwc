@@ -1,5 +1,5 @@
 # An Ubuntu environment configured for building the phd repo.
-FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
+FROM nvidia/opencl
 #FROM ubuntu:16.04
 
 MAINTAINER Beau Johnston <beau.johnston@anu.edu.au>
@@ -20,10 +20,20 @@ ENV PREDICTIONS /opencl-predictions-with-aiwc
 
 # Install essential packages.
 RUN apt-get update
-RUN apt-get install --no-install-recommends -y software-properties-common ocl-icd-opencl-dev
+RUN apt-get install --no-install-recommends -y software-properties-common \
+    ocl-icd-opencl-dev \
+    pkg-config \
+    build-essential \
+    git \
+    cmake \
+    make \
+    zlib1g-dev
+
+# Install OpenCL Device Query tool
+RUN git clone https://github.com/BeauJoh/opencl_device_query.git /opencl_device_query
 
 # Install LibSciBench
-RUN apt-get install --no-install-recommends -y git cmake llvm-3.9 llvm-3.9-dev clang-3.9 libclang-3.9-dev gcc g++ make zlib1g-dev
+RUN apt-get install --no-install-recommends -y llvm-3.9 llvm-3.9-dev clang-3.9 libclang-3.9-dev gcc g++
 RUN git clone https://github.com/spcl/liblsb.git $LSB_SRC
 
 WORKDIR $LSB_SRC
@@ -51,3 +61,5 @@ RUN Rscript -e "devtools::install_github('imbs-hl/ranger')"
 RUN git clone https://github.com/BeauJoh/opencl-predictions-with-aiwc.git $PREDICTIONS
 
 CMD ["/bin/bash"]
+WORKDIR /
+

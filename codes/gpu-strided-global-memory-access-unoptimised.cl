@@ -1,11 +1,9 @@
 //shared memory in matrix multiplication ported from the [cuda c best practices guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory-in-matrix-multiplication-c-aa)
 
-#define TILE_DIM
-
 __kernel void simpleMultiply(__global float *a,__global float *b,__global float *c, int N)
 {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = get_group_id(1) * get_local_size(1) + get_local_id(1);//blockIdx.y * blockDim.y + threadIdx.y;
+    int col = get_group_id(0) * get_local_size(0) + get_local_id(0);//blockIdx.x * blockDim.x + threadIdx.x;
     float sum = 0.0f;
     for (int i = 0; i < TILE_DIM; i++) {
         sum += a[row*TILE_DIM+i] * b[i*N+col];

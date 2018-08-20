@@ -2,7 +2,7 @@ Hinting device suitability: from a hardware agnostic perspective
 ----------------------------------------------------------------
 
 Porting large HPC codes, such as those seen in weather forecasting and othes supercomputing workloads, from conventional CPU architectures to accelerators is intensive on the developer.
-Even heterogenous languages -- like OpenCL -- which support having a single implementation of a code often don't alleviate this process since algorithmic optimisations are needed to fully utilise the selected accelerator hardware.
+Even heterogeneous languages -- like OpenCL -- which support having a single implementation of a code often don't alleviate this process since algorithmic optimisations are needed to fully utilise the selected accelerator hardware.
 Worst still, the classic methods of focusing optimisation effort on the longest running kernels is often cumbersome and wasteful -- consider cases where kernels are quite already efficient but the low hanging fruit are missed, for some of the worst kernels which have shorter running times have simple optimisations which matter once the energy usage, operating costs and size of these systems are considered.
 We propose a methodology to examine a kernels suitability/goodness-of-fit to a desired accelerator by examining the inherent properties of the workflow, with the aims of guiding the optimisation methods of the developer.
 The methodlogy is evaluated by comparing the suggested programming practices of CPU and GPU specific algorithmic optimisations, on portable OpenCL codes, and how architectural independent analysis can identify poor adherence to these practices.

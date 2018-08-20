@@ -102,8 +102,6 @@ int main(int argc, char** argv){
     sbd_err = clGetPlatformIDs(num_platforms, sbd_platforms, NULL);
     except(sbd_err == CL_SUCCESS, "can't get platform info");
     except(num_platforms, "no OpenCL platforms found");
-    std::cout << platform_id << std::endl;
-    std::cout << num_platforms << std::endl;
     except(platform_id >= 0 && platform_id < num_platforms, "invalid platform selection");
 
     sbd_err = clGetDeviceIDs(sbd_platforms[platform_id], CL_DEVICE_TYPE_ALL,0, 0, &num_devices);
@@ -119,21 +117,13 @@ int main(int argc, char** argv){
     sbd_queue = clCreateCommandQueue(sbd_context, sbd_devices[device_id], 0, &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create command queue");
 
-    //compile synthetic kernel
-    cl_program sbd_program = clCreateProgramWithSource(sbd_context, 1, (const char **) &sk_source, NULL, &sbd_err);
-    except(sbd_err == CL_SUCCESS, "can't build kernel");
-    sbd_err = clBuildProgram(sbd_program, 1, &sbd_devices[device_id], NULL, NULL, NULL);
-    except(sbd_err == CL_SUCCESS, "can't build program");
-    //cl_kernel sbd_kernel = clCreateKernel(sbd_program, "A", &sbd_err);
-    cl_kernel sbd_kernel = clCreateKernel(sbd_program, "simpleMultiply", &sbd_err);
-    except(sbd_err == CL_SUCCESS, "can't create kernel");
-
     //set-up memory for payload/problem size
     size_t KiB;
-    if(strcmp(problem_size, "tiny"))       {KiB = 31;}    //  32 KiB < L1
-    else if(strcmp(problem_size, "small")) {KiB = 255;}   // 256 KiB < L2
-    else if(strcmp(problem_size, "medium")){KiB = 8191;}  //8192 KiB < L3
-    else if(strcmp(problem_size, "large")) {KiB = 16384;} //8192 KiB > L3 
+    if(strcmp(problem_size, "tiny")==0)       {KiB = 31;}    //  32 KiB < L1
+    else if(strcmp(problem_size, "small")==0) {KiB = 255;}   // 256 KiB < L2
+    else if(strcmp(problem_size, "medium")==0){KiB = 8191;}  //8192 KiB < L3
+    else if(strcmp(problem_size, "large")==0) {KiB = 16384;} //8192 KiB > L3 
+    else if(strcmp(problem_size, "huge")==0)  {KiB = 131072;}//
     else{assert(false && "invalid problem size -- must be tiny, small, medium or large");} 
 
     float bytes_per_buffer = (KiB*1024)/3;
@@ -151,14 +141,28 @@ int main(int argc, char** argv){
 
     //MxM matrix;
     int M = floor(sqrt(elements));
+    M = floor(M/32)*32; //but rounded down so it's a multiple of 32 -- 32x32 divisible blocks
+    int N = M;//just use even sized matrices to keep it simple
+    int w = 32;
+
+    std::cout << "Operating on a " << M << "x" << M << " matrix with a tile size " << w << "..." << std::endl;
+
+    //compile synthetic kernel
+    std::string compiler_flags = "-DTILE_DIM=" + std::to_string(M); 
+    cl_program sbd_program = clCreateProgramWithSource(sbd_context, 1, (const char **) &sk_source, NULL, &sbd_err);
+    except(sbd_err == CL_SUCCESS, "can't build kernel");
+    sbd_err = clBuildProgram(sbd_program, 1, &sbd_devices[device_id], compiler_flags.c_str(), NULL, NULL);
+    except(sbd_err == CL_SUCCESS, "can't build program");
+    cl_kernel sbd_kernel = clCreateKernel(sbd_program, "simpleMultiply", &sbd_err);
+    except(sbd_err == CL_SUCCESS, "can't create kernel");
 
     randomise_payload(a,elements);
     randomise_payload(b,elements);
     randomise_payload(c,elements);
 
     //run the kernel
-    size_t global_work = elements;
-    size_t local_work = 1; 
+    size_t global_work[2] = {static_cast<size_t>(M),static_cast<size_t>(M)};
+    size_t local_work[2] = {static_cast<size_t>(w),static_cast<size_t>(w)}; 
 
     sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
     sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
@@ -168,10 +172,10 @@ int main(int argc, char** argv){
     sbd_err = clSetKernelArg(sbd_kernel, 0, sizeof(cl_mem), &sbd_a);
     sbd_err = clSetKernelArg(sbd_kernel, 1, sizeof(cl_mem), &sbd_b);
     sbd_err = clSetKernelArg(sbd_kernel, 2, sizeof(cl_mem), &sbd_c);
-    sbd_err = clSetKernelArg(sbd_kernel, 3, sizeof(cl_int), &elements);
+    sbd_err = clSetKernelArg(sbd_kernel, 3, sizeof(cl_int), &M);
     except(sbd_err == CL_SUCCESS, "failed to set kernel arguments");
 
-    sbd_err = clEnqueueNDRangeKernel(sbd_queue, sbd_kernel, 1, NULL, &global_work,&local_work,0,NULL,NULL);
+    sbd_err = clEnqueueNDRangeKernel(sbd_queue, sbd_kernel, 2, NULL, global_work,local_work,0,NULL,NULL);
     except(sbd_err == CL_SUCCESS, "failed to execute kernel");
 
     clFinish(sbd_queue);
@@ -180,7 +184,7 @@ int main(int argc, char** argv){
     sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
     sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
     except(sbd_err == CL_SUCCESS, "can't read from device memory");
-
+    print_payload(a,M*M);
     delete a;
     delete b;
     delete c;
