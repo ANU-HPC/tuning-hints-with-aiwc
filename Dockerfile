@@ -27,7 +27,8 @@ RUN apt-get install --no-install-recommends -y software-properties-common \
     git \
     cmake \
     make \
-    zlib1g-dev
+    zlib1g-dev \
+    apt-transport-https
 
 # Install OpenCL Device Query tool
 RUN git clone https://github.com/BeauJoh/opencl_device_query.git /opencl_device_query
@@ -55,24 +56,30 @@ RUN make
 RUN make install
 
 # Install R and model dependencies
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+RUN add-apt-repository 'deb [arch=amd64,i386] https://cran.rstudio.com/bin/linux/ubuntu xenial/'
+RUN apt-get update
 RUN apt-get install --no-install-recommends -y r-base libcurl4-openssl-dev libssl-dev r-cran-rcppeigen
 RUN Rscript -e "install.packages('devtools',repos = 'http://cran.us.r-project.org');"
 RUN Rscript -e "devtools::install_github('imbs-hl/ranger')"
 RUN git clone https://github.com/BeauJoh/opencl-predictions-with-aiwc.git $PREDICTIONS
 
 # Install beakerx
-RUN apt-get install --no-install-recommends -y python3-pip python3-setuptools
+RUN apt-get install --no-install-recommends -y python3-pip python3-setuptools python3-dev libreadline-dev libpcre3-dev libbz2-dev liblzma-dev
 RUN pip3 install --upgrade pip
-RUN pip3 install requests beakerx \
+RUN pip3 install tzlocal rpy2 requests beakerx \
     && beakerx install
 
 # Install R module for beakerx
 RUN Rscript -e "devtools::install_github('IRkernel/IRkernel')"
 RUN Rscript -e "IRkernel::installspec(user = FALSE)"
+RUN Rscript -e "devtools::install_github('tidyverse/magrittr')"
+RUN Rscript -e "devtools::install_github('tidyverse/ggplot2')"
+RUN Rscript -e "devtools::install_github('tidyverse/tidyr')"
 
 CMD ["/bin/bash"]
 
-WORKDIR /
+WORKDIR /guiding-optimisation-with-aiwc
 ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:${LD_LIBRARYPATH}"
 ENV PATH "${PATH}:${OCLGRIND}/bin}"
 
