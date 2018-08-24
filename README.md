@@ -18,12 +18,26 @@ To generate a docker image named guiding-optimisation, run:
 
 To start the docker image run:
 
-`docker run --runtime=nvidia -it --mount src=`pwd`,target=/guiding-optimisation-with-aiwc,type=bind guiding-optimisation`
+`docker run --runtime=nvidia -it --mount src=`pwd`,target=/guiding-optimisation-with-aiwc,type=bind -p 8888:8888 --net=host guiding-optimisation`
 
 And run the codes with:
 `cd /guiding-optimisation-with-aiwc/codes`
 
 `make`
 
-``
+`make test`
+
+This generates a sample of the runtimes with libscibench and the AIWC metrics
+
+For reproducibility, BeakerX has also been added for replicating results and for the transparency of analysis.
+It is lauched by running:
+
+`cd /guiding-optimisation-with-aiwc/codes`
+`beakerx --allow-root`
+
+from within the container and following the prompts to access it from the website front-end.
+
+*Note* that if this node is accessed from an ssh session local ssh port forwarding is required and is achieved with the following:
+
+`ssh -N -f -L localhost:8888:localhost:8888 <node-name>`
 

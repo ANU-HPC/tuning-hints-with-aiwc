@@ -60,6 +60,19 @@ RUN Rscript -e "install.packages('devtools',repos = 'http://cran.us.r-project.or
 RUN Rscript -e "devtools::install_github('imbs-hl/ranger')"
 RUN git clone https://github.com/BeauJoh/opencl-predictions-with-aiwc.git $PREDICTIONS
 
+# Install beakerx
+RUN apt-get install --no-install-recommends -y python3-pip python3-setuptools
+RUN pip3 install --upgrade pip
+RUN pip3 install requests beakerx \
+    && beakerx install
+
+# Install R module for beakerx
+RUN Rscript -e "devtools::install_github('IRkernel/IRkernel')"
+RUN Rscript -e "IRkernel::installspec(user = FALSE)"
+
 CMD ["/bin/bash"]
+
 WORKDIR /
+ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:${LD_LIBRARYPATH}"
+ENV PATH "${PATH}:${OCLGRIND}/bin}"
 
