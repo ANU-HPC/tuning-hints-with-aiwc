@@ -37,7 +37,7 @@ __kernel void coalescedMultiply(__global float* a, __global float* b, __global f
 __kernel void transposedCoalescedMultiply(__global float* a, __global float* b, __global float* c, int N)
 {
     __local float aTile[TILE_DIM][TILE_DIM];
-    __local float transposedTile[TILE_DIM][TILE_DIM];
+    __local float transposedTile[TILE_DIM][TILE_DIM+1];
 
     int row = get_group_id(1) * get_local_size(1) + get_local_id(1);//blockIdx.y * blockDim.y + threadIdx.y;
     int col = get_group_id(0) * get_local_size(0) + get_local_id(0);//blockIdx.x * blockDim.x + threadIdx.x;
