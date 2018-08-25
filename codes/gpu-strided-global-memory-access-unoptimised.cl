@@ -56,3 +56,4 @@ __kernel void transposedCoalescedMultiply(__global float* a, __global float* b, 
     c[row*N+col] = sum;
 }
 
+
