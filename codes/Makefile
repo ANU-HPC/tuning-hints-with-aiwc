@@ -8,4 +8,4 @@ test: sbd
 	$(OCLGRIND)/bin/oclgrind --workload-characterisation ./sbd ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 aiwc
 
 clean:
-	rm sbd lsb.*.r0* aiwc_*.csv aiwc_*_itb.log
+	rm sbd lsb.*.r0* aiwc_*.csv aiwc_*_itb.log Rplots.pdf

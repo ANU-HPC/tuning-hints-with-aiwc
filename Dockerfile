@@ -16,6 +16,7 @@ ENV LSB_SRC /libscibench-source
 ENV LSB /libscibench
 ENV OCLGRIND_SRC /oclgrind-source
 ENV OCLGRIND /oclgrind
+ENV GIT_LSF /git-lsf
 ENV PREDICTIONS /opencl-predictions-with-aiwc
 
 # Install essential packages.
@@ -59,9 +60,18 @@ RUN make install
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
 RUN add-apt-repository 'deb [arch=amd64,i386] https://cran.rstudio.com/bin/linux/ubuntu xenial/'
 RUN apt-get update
-RUN apt-get install --no-install-recommends -y r-base libcurl4-openssl-dev libssl-dev r-cran-rcppeigen
+RUN apt-get install --no-install-recommends -y r-base libcurl4-openssl-dev libssl-dev r-cran-rcppeigen wget
 RUN Rscript -e "install.packages('devtools',repos = 'http://cran.us.r-project.org');"
 RUN Rscript -e "devtools::install_github('imbs-hl/ranger')"
+# Install the git-lsf module
+WORKDIR /downloads
+RUN wget https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-linux-amd64-v2.5.1.tar.gz
+RUN mkdir $GIT_LSF
+RUN tar -xvf git-lfs-linux-amd64-v2.5.1.tar.gz --directory $GIT_LSF
+WORKDIR $GIT_LSF
+RUN ./install.sh
+RUN git lfs install
+# Install the R model
 RUN git clone https://github.com/BeauJoh/opencl-predictions-with-aiwc.git $PREDICTIONS
 
 # Install beakerx

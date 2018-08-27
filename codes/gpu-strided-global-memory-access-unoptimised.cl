@@ -47,7 +47,7 @@ __kernel void transposedCoalescedMultiply(__global float* a, __global float* b, 
     int y = get_local_id(1);
 
     aTile[y][x] = a[row*TILE_DIM+x];
-    transposedTile[x][y] = a[(get_group_id(0)*get_local_size(0) + get_local_id(1))*TILE_DIM + get_local_id(0)];
+    transposedTile[x][y] = b[(get_group_id(0)*get_local_size(0) + get_local_id(1))*TILE_DIM + get_local_id(0)];
     barrier(CLK_LOCAL_MEM_FENCE);
 
     for (int i = 0; i < TILE_DIM; i++) {
