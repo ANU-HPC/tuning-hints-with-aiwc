@@ -127,20 +127,29 @@ int main(int argc, char** argv){
     size_t KiB;
     if(strcmp(problem_size, "tiny")==0)       {KiB = 31;}    //  32 KiB < L1
     else if(strcmp(problem_size, "small")==0) {KiB = 255;}   // 256 KiB < L2
-    else if(strcmp(problem_size, "medium")==0){KiB = 8191;}  //8192 KiB < L3
+    else if(strcmp(problem_size, "medium")==0){KiB = 7900;}  //8192 KiB < L3
     else if(strcmp(problem_size, "large")==0) {KiB = 16384;} //8192 KiB > L3 
     else if(strcmp(problem_size, "huge")==0)  {KiB = 131072;}//
     else{assert(false && "invalid problem size -- must be tiny, small, medium or large");} 
 
-    float bytes_per_buffer = (KiB*1024)/3;
-    cl_int elements = static_cast<cl_int>(bytes_per_buffer/sizeof(float));
+    unsigned int c_bytes = (KiB*1024);
+    cl_int c_elements = static_cast<cl_int>(c_bytes/sizeof(float));
+    //MxN matrix (but actually square matrix)
+    int w = 32;
+    int M = floor(sqrt(c_elements));
+    M = floor(M/w)*w; //but rounded down so it's a multiple of 32 -- 32x32 divisible blocks
+    int N = M;//just use even sized matrices to keep it simple
+
+    c_bytes = M*N*sizeof(float);
+    unsigned int a_bytes = w*M*sizeof(float);
+    unsigned int b_bytes = w*N*sizeof(float);
+
+
+    std::cout << "M = " << M << " N = " << N << " total KiB = " <<  (c_bytes+a_bytes+b_bytes)/1024 << std::endl;
+
     LSB_Rec(0);
 
-    //MxM matrix;
-    int M = floor(sqrt(elements));
-    M = floor(M/32)*32; //but rounded down so it's a multiple of 32 -- 32x32 divisible blocks
-    int N = M;//just use even sized matrices to keep it simple
-    int w = 32;
+    
 
     std::cout << "Operating on a " << M << "x" << M << " matrix with a tile size " << w << "..." << std::endl;
 
@@ -171,16 +180,16 @@ int main(int argc, char** argv){
     //memory setup
     LSB_Set_Rparam_string("region", "device_side_buffer_setup");
     LSB_Res();
-    cl_mem sbd_a = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,bytes_per_buffer,NULL,&sbd_err);
+    cl_mem sbd_a = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,a_bytes,NULL,&sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create device memory a");
-    cl_mem sbd_b = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,bytes_per_buffer,NULL,&sbd_err);
+    cl_mem sbd_b = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,b_bytes,NULL,&sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create device memory b");
-    cl_mem sbd_c = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,bytes_per_buffer,NULL,&sbd_err);
+    cl_mem sbd_c = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,c_bytes,NULL,&sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create device memory c");
 
-    float* a  = new float[elements]; 
-    float* b  = new float[elements];
-    float* c  = new float[elements];
+    float* a  = new float[M*w]; 
+    float* b  = new float[N*w];
+    float* c  = new float[M*N];
     LSB_Rec(0);
 
     int sample_size = 100;
@@ -191,16 +200,16 @@ int main(int argc, char** argv){
     LSB_Set_Rparam_string("kernel","simpleMultiply");
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
-        randomise_payload(a,elements);
-        randomise_payload(b,elements);
-        randomise_payload(c,elements);
+        randomise_payload(a,M*w);
+        randomise_payload(b,N*w);
+        randomise_payload(c,M*N);
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region","device_side_h2d_copy");
         LSB_Res();
-        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
+        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't write to device memory!");
         LSB_Rec(i);
 
@@ -224,9 +233,9 @@ int main(int argc, char** argv){
         
         LSB_Set_Rparam_string("region","device_side_d2h_copy");
         LSB_Res();
-        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
+        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
     }
@@ -234,16 +243,16 @@ int main(int argc, char** argv){
     LSB_Set_Rparam_string("kernel","coalescedMultiply");
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
-        randomise_payload(a,elements);
-        randomise_payload(b,elements);
-        randomise_payload(c,elements);
+        randomise_payload(a,M*w);
+        randomise_payload(b,N*w);
+        randomise_payload(c,M*N);
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region","device_side_h2d_copy");
         LSB_Res();
-        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
+        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't write to device memory!");
         LSB_Rec(i);
 
@@ -267,9 +276,9 @@ int main(int argc, char** argv){
         
         LSB_Set_Rparam_string("region","device_side_d2h_copy");
         LSB_Res();
-        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
+        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
     }
@@ -277,16 +286,16 @@ int main(int argc, char** argv){
     LSB_Set_Rparam_string("kernel","sharedABMultiply");
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
-        randomise_payload(a,elements);
-        randomise_payload(b,elements);
-        randomise_payload(c,elements);
+        randomise_payload(a,M*w);
+        randomise_payload(b,N*w);
+        randomise_payload(c,M*N);
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region","device_side_h2d_copy");
         LSB_Res();
-        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
+        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't write to device memory!");
         LSB_Rec(i);
 
@@ -310,9 +319,9 @@ int main(int argc, char** argv){
         
         LSB_Set_Rparam_string("region","device_side_d2h_copy");
         LSB_Res();
-        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,bytes_per_buffer,a,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,bytes_per_buffer,b,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,bytes_per_buffer,c,0,NULL,NULL);
+        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
     }
