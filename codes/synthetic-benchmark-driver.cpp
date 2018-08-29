@@ -164,7 +164,7 @@ int main(int argc, char** argv){
     cl_kernel simpleMultiply_kernel = clCreateKernel(sbd_program, "simpleMultiply", &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create kernel");
     cl_kernel coalescedMultiply_kernel = clCreateKernel(sbd_program, "coalescedMultiply", &sbd_err);
-    cl_kernel transposedCoalescedMultiply_kernel= clCreateKernel(sbd_program, "transposedCoalescedMultiply", &sbd_err);
+    cl_kernel sharedABMultiply_kernel= clCreateKernel(sbd_program, "sharedABMultiply", &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create kernel");
     LSB_Rec(0);
 
@@ -273,8 +273,8 @@ int main(int argc, char** argv){
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
     }
-    //transposedCoalescedMultiply
-    LSB_Set_Rparam_string("kernel","transposedCoalescedMultiply");
+    //sharedABMultiply
+    LSB_Set_Rparam_string("kernel","sharedABMultiply");
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
         randomise_payload(a,elements);
@@ -294,15 +294,15 @@ int main(int argc, char** argv){
         size_t global_work[2] = {static_cast<size_t>(M),static_cast<size_t>(M)};
         size_t local_work[2] = {static_cast<size_t>(w),static_cast<size_t>(w)}; 
 
-        LSB_Set_Rparam_string("region","transposedCoalescedMultiply_kernel");
+        LSB_Set_Rparam_string("region","sharedABMultiply_kernel");
         LSB_Res();
-        sbd_err = clSetKernelArg(transposedCoalescedMultiply_kernel, 0, sizeof(cl_mem), &sbd_a);
-        sbd_err = clSetKernelArg(transposedCoalescedMultiply_kernel, 1, sizeof(cl_mem), &sbd_b);
-        sbd_err = clSetKernelArg(transposedCoalescedMultiply_kernel, 2, sizeof(cl_mem), &sbd_c);
-        sbd_err = clSetKernelArg(transposedCoalescedMultiply_kernel, 3, sizeof(cl_int), &w);
+        sbd_err = clSetKernelArg(sharedABMultiply_kernel, 0, sizeof(cl_mem), &sbd_a);
+        sbd_err = clSetKernelArg(sharedABMultiply_kernel, 1, sizeof(cl_mem), &sbd_b);
+        sbd_err = clSetKernelArg(sharedABMultiply_kernel, 2, sizeof(cl_mem), &sbd_c);
+        sbd_err = clSetKernelArg(sharedABMultiply_kernel, 3, sizeof(cl_int), &w);
         except(sbd_err == CL_SUCCESS, "failed to set kernel arguments");
 
-        sbd_err = clEnqueueNDRangeKernel(sbd_queue, transposedCoalescedMultiply_kernel, 2, NULL, global_work,local_work,0,NULL,NULL);
+        sbd_err = clEnqueueNDRangeKernel(sbd_queue, sharedABMultiply_kernel, 2, NULL, global_work,local_work,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "failed to execute kernel");
 
         clFinish(sbd_queue);
@@ -324,7 +324,7 @@ int main(int argc, char** argv){
     clReleaseMemObject(sbd_c);
     clReleaseMemObject(sbd_b);
     clReleaseMemObject(sbd_a);
-    clReleaseKernel(transposedCoalescedMultiply_kernel);
+    clReleaseKernel(sharedABMultiply_kernel);
     clReleaseKernel(coalescedMultiply_kernel);
     clReleaseKernel(simpleMultiply_kernel);
     clReleaseProgram(sbd_program);
