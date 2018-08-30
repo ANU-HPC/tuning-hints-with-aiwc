@@ -1,7 +1,19 @@
-all: sbd aiwc-tester
+all: sbd fdtd aiwc-tester
 
 sbd: synthetic-benchmark-driver.cpp
 	g++ synthetic-benchmark-driver.cpp -o sbd -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
+
+fdtd: $(LIB) oclFDTD3d/src/oclFDTD3d.cpp oclFDTD3d/src/FDTD3dReference.cpp oclFDTD3d/src/FDTD3dGPU.cpp $(LIB)/libshrUtils.so $(LIB)/liboclUtils.so
+	g++ -IoclFDTD3d/inc -IoclFDTD3d/src oclFDTD3d/src/oclFDTD3d.cpp oclFDTD3d/src/FDTD3dReference.cpp oclFDTD3d/src/FDTD3dGPU.cpp -o fdtd -lOpenCL -llsb -loclUtils -lshrUtils -Llib -L$(LSB)/lib -I$(LSB)/include -std=c++11
+
+$(LIB)/libshrUtils.so: oclFDTD3d/src/shrUtils.cpp oclFDTD3d/src/cmd_arg_reader.cpp
+	g++ -shared -fPIC -IoclFDTD3d/inc -IoclFDTD3d/src oclFDTD3d/src/shrUtils.cpp oclFDTD3d/src/cmd_arg_reader.cpp -o $(LIB)/libshrUTils.so -lOpenCL -std=c++11 -DUNIX
+
+$(LIB)/liboclUtils.so:  oclFDTD3d/src/oclUtils.cpp
+	g++ -shared -fPIC -IoclFDTD3d/inc -IoclFDTD3d/src oclFDTD3d/src/oclUtils.cpp -o $(LIB)/liboclUtils.so -lOpenCL -std=c++11 -DUNIX
+
+$(LIB):
+	mkdir -p lib
 
 test: sbd
 	./sbd ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 runtime;

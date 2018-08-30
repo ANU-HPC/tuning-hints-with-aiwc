@@ -90,6 +90,6 @@ RUN Rscript -e "devtools::install_github('tidyverse/tidyr')"
 CMD ["/bin/bash"]
 
 WORKDIR /guiding-optimisation-with-aiwc
-ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:${LD_LIBRARYPATH}"
+ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARYPATH}"
 ENV PATH "${PATH}:${OCLGRIND}/bin}"
 
