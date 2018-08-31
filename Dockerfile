@@ -16,6 +16,7 @@ ENV LSB_SRC /libscibench-source
 ENV LSB /libscibench
 ENV OCLGRIND_SRC /oclgrind-source
 ENV OCLGRIND /oclgrind
+ENV OCLGRIND_BIN /oclgrind/bin/oclgrind
 ENV GIT_LSF /git-lsf
 ENV PREDICTIONS /opencl-predictions-with-aiwc
 
@@ -86,6 +87,19 @@ RUN Rscript -e "IRkernel::installspec(user = FALSE)"
 RUN Rscript -e "devtools::install_github('tidyverse/magrittr')"
 RUN Rscript -e "devtools::install_github('tidyverse/ggplot2')"
 RUN Rscript -e "devtools::install_github('tidyverse/tidyr')"
+
+# Install LetMeKnow
+RUN pip3 install -U 'lmk==0.0.14'
+
+# Install EOD
+RUN apt-get install --no-install-recommends -y autoconf libtool
+RUN git clone https://github.com/BeauJoh/OpenDwarfs.git
+WORKDIR /OpenDwarfs
+RUN ./autogen.sh
+RUN mkdir build
+WORKDIR /OpenDwarfs/build
+RUN ../configure --with-libscibench=/libscibench
+RUN make
 
 CMD ["/bin/bash"]
 
