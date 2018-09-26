@@ -1,7 +1,10 @@
-all: sbd fdtd aiwc-tester
+all: gpu-stride cpu-loop-block aiwc-tester #fdtd 
 
-sbd: synthetic-benchmark-driver.cpp
-	g++ synthetic-benchmark-driver.cpp -o sbd -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
+gpu-stride: gpu-strided-global-memory-access-unoptimised.cpp
+	g++ gpu-strided-global-memory-access-unoptimised.cpp -o gpu-stride -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
+
+cpu-loop-block: cpu-loop-blocking.cpp
+	g++ cpu-loop-blocking.cpp -o cpu-loop-block -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11 -g -O0
 
 fdtd: $(LIB) oclFDTD3d/src/oclFDTD3d.cpp oclFDTD3d/src/FDTD3dReference.cpp oclFDTD3d/src/FDTD3dGPU.cpp $(LIB)/libshrUtils.so $(LIB)/liboclUtils.so
 	g++ -IoclFDTD3d/inc -IoclFDTD3d/src oclFDTD3d/src/oclFDTD3d.cpp oclFDTD3d/src/FDTD3dReference.cpp oclFDTD3d/src/FDTD3dGPU.cpp -o fdtd -lOpenCL -llsb -loclUtils -lshrUtils -Llib -L$(LSB)/lib -I$(LSB)/include -std=c++11
@@ -15,9 +18,9 @@ $(LIB)/liboclUtils.so:  oclFDTD3d/src/oclUtils.cpp
 $(LIB):
 	mkdir -p lib
 
-test: sbd
-	./sbd ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 runtime;
-	$(OCLGRIND)/bin/oclgrind --workload-characterisation ./sbd ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 aiwc
+test: gpu-stride
+	./gpu-stride ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 runtime;
+	$(OCLGRIND)/bin/oclgrind --workload-characterisation ./gpu-stride ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 aiwc
 
 aiwc-tester: aiwc-tester.cpp
 	g++ aiwc-tester.cpp -o aiwc-tester -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
@@ -26,4 +29,4 @@ aiwc-test: aiwc-tester
 	$(OCLGRIND)/bin/oclgrind --workload-characterisation ./aiwc-tester ./simple-aiwc-tests.cl tiny 0 0 aiwc
 
 clean:
-	rm -f sbd aiwc-tester lsb.*.r0* aiwc_*.csv aiwc_*_itb.log Rplots.pdf
+	rm -f sbd aiwc-tester lsb.*.r0* aiwc_*.csv aiwc_*_itb.log Rplots.pdf cpu-loop-block
