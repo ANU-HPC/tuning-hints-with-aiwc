@@ -138,11 +138,9 @@ int main(int argc, char** argv){
     int w = 32;
     int M = floor(sqrt(c_elements));
     M = floor(M/w)*w; //but rounded down so it's a multiple of 32 -- 32x32 divisible blocks
-    int N = M;//just use even sized matrices to keep it simple
 
-    c_bytes = M*N*sizeof(float);
-    unsigned int a_bytes = w*M*sizeof(float);
-    unsigned int b_bytes = w*N*sizeof(float);
+    unsigned int a_bytes = M*M*sizeof(float);
+    unsigned int b_bytes = M*M*sizeof(float);
     w = 1;
 
     std::cout << "M = " << M << " total KiB = " <<  (a_bytes+b_bytes)/1024 << std::endl;
