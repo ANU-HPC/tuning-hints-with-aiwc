@@ -7,7 +7,7 @@ cpu-loop-block: cpu-loop-blocking.cpp
 	g++ cpu-loop-blocking.cpp -o cpu-loop-block -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
 
 cpu-mandelbrot-vectorization: cpu-mandelbrot-vectorization.cpp
-	g++ cpu-mandelbrot-vectorization.cpp -o cpu-mandelbrot-vectorization -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11 -g -O0
+	g++ cpu-mandelbrot-vectorization.cpp -o cpu-mandelbrot-vectorization -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
 
 fdtd: $(LIB) oclFDTD3d/src/oclFDTD3d.cpp oclFDTD3d/src/FDTD3dReference.cpp oclFDTD3d/src/FDTD3dGPU.cpp $(LIB)/libshrUtils.so $(LIB)/liboclUtils.so
 	g++ -IoclFDTD3d/inc -IoclFDTD3d/src oclFDTD3d/src/oclFDTD3d.cpp oclFDTD3d/src/FDTD3dReference.cpp oclFDTD3d/src/FDTD3dGPU.cpp -o fdtd -lOpenCL -llsb -loclUtils -lshrUtils -Llib -L$(LSB)/lib -I$(LSB)/include -std=c++11

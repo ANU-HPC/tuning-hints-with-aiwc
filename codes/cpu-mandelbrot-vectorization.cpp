@@ -100,7 +100,7 @@ int main(int argc, char** argv){
     int device_id = atoi(argv[4]);
     char* mode = argv[5];
 
-    LSB_Init("cpu_loop_blocking",0);
+    LSB_Init("cpu_vectorization",0);
     LSB_Set_Rparam_string("problem_size",problem_size);
     LSB_Set_Rparam_string("kernel","none_yet");
 
