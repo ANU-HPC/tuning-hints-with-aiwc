@@ -176,7 +176,7 @@ int main(int argc, char** argv){
     LSB_Set_Rparam_string("region", "kernel_creation");
     LSB_Res();
     //compile kernels
-    std::string compiler_flags = "-DDIMX=" + std::to_string(M) + " -DDIMY=" + std::to_string(M) + " -DX_STEP=(0.5f/DIMX) -DY_STEP=(0.4f/(DIMY/2))"; 
+    std::string compiler_flags = "-DDIMX=" + std::to_string(M) + " -DDIMY=" + std::to_string(M) + " -DX_STEP=(0.5f/DIMX) -DY_STEP=(0.4f/(DIMY/2))  "; 
     cl_program sbd_program = clCreateProgramWithSource(sbd_context, 1, (const char **) &sk_source, NULL, &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't build kernel");
     sbd_err = clBuildProgram(sbd_program, 1, &sbd_devices[device_id], compiler_flags.c_str(), NULL, NULL);
