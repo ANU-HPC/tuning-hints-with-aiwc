@@ -1,4 +1,30 @@
-Hinting device suitability: from a hardware agnostic perspective
+---
+title: "Hinting device suitability: from a hardware agnostic perspective"
+abstract: "
+
+Measuring performance-critical characteristics of application workloads is important both for developers, who must understand and optimize the performance of codes, as well as designers and integrators of HPC systems, who must ensure that compute architectures are suitable for the intended workloads.
+However, if these workload characteristics are tied to architectural features that are specific to a particular system, they may not generalize well to alternative or future systems.
+An architecture-independent method ensures an accurate characterization of inherent program behaviour, without bias due to architecture-dependent features that vary widely between different types of accelerators.
+
+This work presents the first architecture-independent workload characterization framework for heterogeneous compute platforms, proposing a set of metrics determining the suitability and performance of an application on any parallel HPC architecture.
+The tool, AIWC, is capable of characterizing OpenCL workloads currently in use in the supercomputing setting and is deployed as part of the open-source Oclgrind simulator.
+AIWC simulates an OpenCL device by directly interpreting LLVM instructions, and the resulting metrics may be used for performance prediction and developer feedback to guide device-specific optimizations.
+An evaluation of the metrics collected over a subset of the Extended OpenDwarfs Benchmark Suite is also presented.
+"
+keywords: "workload characterization, benchmarking, HPC"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+bibliography: ./bibliography/bibliography.bib
+---
+
+<!--IEEE needs the keywords to be set here :(-->
+\iftoggle{IEEE-BUILD}{
+\begin{IEEEkeywords}
+workload characterisation, analysis
+\end{IEEEkeywords}
+}{}
+
+
+
 ----------------------------------------------------------------
 
 Porting large HPC codes, such as those seen in weather forecasting and othes supercomputing workloads, from conventional CPU architectures to accelerators is intensive on the developer.
@@ -42,3 +68,4 @@ Per kernel breakdown
 If AIWC metric *x* falls within range *y* we can conclude the algorithm is best suited to *z* devices.
 However, we can also speculate around the ideal range for each device, or at least identify the threshold around what is suitable \todo[inline]{how do we suggest whether to go up or down an AIWC metric range -- or which code characteristics improve this?}
 
+\todo[inline]{study of two different matrix multiply codes that examine how AIWC metrics change over cache-critical and cache-oblivious workloads}
