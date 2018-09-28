@@ -100,7 +100,6 @@ inline int allzeros(int4 a){
 __kernel void mandelbrot_vectorized(__global int* map)
 {
     //Example 5-33 Vectorized Mandelbrot Set Map Evaluation Using SSE4.1 Intrinsics from:https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-optimization-manual.pdf
-    //TODO: verify compiler improvement by moving vectors into constant variables
     const float4 xstep = (float4)(X_STEP,X_STEP,X_STEP,X_STEP);
     const float4 ystep = (float4)(Y_STEP,Y_STEP,Y_STEP,Y_STEP);
     const float4 four_step = (float4)(Y_STEP*4,Y_STEP*4,Y_STEP*4,Y_STEP*4);
@@ -126,7 +125,8 @@ __kernel void mandelbrot_vectorized(__global int* map)
                     break;
                 }
                 //if (allzeros(vmask)){
-                if (all(isequal(vmask,(int4)(0,0,0,0)))){
+                //if (all(isequal(vmask,(int4)(0,0,0,0)))){//changed this since its only defined for floats (but intel allowed it)
+                if (all(vmask==(int4)(0,0,0,0))){
                     sx = x + sx*sx - sy*sy;
                     sy = y + two_vec*old_sx*sy;
                     iter += one_ivec;
