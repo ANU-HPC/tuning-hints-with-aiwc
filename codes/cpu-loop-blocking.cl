@@ -1,5 +1,5 @@
 //Loop Blocking Example 4-25 from https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-optimization-manual.pdf in Section 4.5.3 Loop Blocking
-
+//TODO: verify loop-blocking correctness
 __kernel void original_loop(__global float* A, __global float* B)
 {
     //get_group_id(0) * get_local_size(0) + get_local_id(0);//not needed -- intel tests only for single thread

@@ -65,6 +65,31 @@ inline void print_payload(float*x,unsigned int size){
     std::cout << std::endl;
 }
 
+inline void print_payload_as_integer(int*x,unsigned int size){
+    for(int i = 0; i < size; i++){
+        std::cout << x[i] << ' ';
+    }
+    std::cout << std::endl;
+}
+
+inline void write_matrix_to_file(int*mat, unsigned int x, unsigned int y, std::string filename){
+    std::ofstream myfile;
+    myfile.open (filename);
+    for(int i = 0; i < y; i++){//rows
+        for(int j = 0; j < x-1; j++){//cols
+            myfile <<  mat[i*x + j] << ',';
+        }
+        myfile << mat[i*x + x] << '\n';
+    }
+    myfile.close();
+}
+
+inline void zero_payload_as_integer(int*x, unsigned int size){
+    for(int i = 0; i < size; i++){
+        x[i] = 0;
+    }
+}
+
 int main(int argc, char** argv){
 
     //extract kernel -- ./sbd <kernel source> <tiny/small/medium/large> <platform id> <device id>
@@ -133,28 +158,25 @@ int main(int argc, char** argv){
     else{assert(false && "invalid problem size -- must be tiny, small, medium or large");} 
 
     unsigned int c_bytes = (KiB*1024);
-    cl_int c_elements = static_cast<cl_int>(c_bytes/sizeof(float));
+    cl_int c_elements = static_cast<cl_int>(c_bytes/sizeof(cl_int));
     //MxN matrix (but actually square matrix)
     int w = 32;
     int M = floor(sqrt(c_elements));
     M = floor(M/w)*w; //but rounded down so it's a multiple of 32 -- 32x32 divisible blocks
 
-    unsigned int a_bytes = M*M*sizeof(float);
-    unsigned int b_bytes = M*M*sizeof(float);
+    unsigned int map_bytes = M*M*sizeof(cl_int);
     w = 1;
 
-    std::cout << "M = " << M << " total KiB = " <<  (a_bytes+b_bytes)/1024 << std::endl;
+    std::cout << "M = " << M << " total KiB = " <<  map_bytes/1024 << std::endl;
 
     LSB_Rec(0);
 
-    
-
-    std::cout << "Operating on a " << M << "x" << M << " matrix with a tile size " << w << "..." << std::endl;
+    std::cout << "Operating on a " << M << "x" << M << " map with a tile size " << w << "..." << std::endl;
 
     LSB_Set_Rparam_string("region", "kernel_creation");
     LSB_Res();
     //compile kernels
-    std::string compiler_flags = "-DMAX=" + std::to_string(M) + " -DBLOCK_SIZE=8"; 
+    std::string compiler_flags = "-DDIMX=" + std::to_string(M) + " -DDIMY=" + std::to_string(M) + " -DX_STEP=(0.5f/DIMX) -DY_STEP=(0.4f/(DIMY/2))"; 
     cl_program sbd_program = clCreateProgramWithSource(sbd_context, 1, (const char **) &sk_source, NULL, &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't build kernel");
     sbd_err = clBuildProgram(sbd_program, 1, &sbd_devices[device_id], compiler_flags.c_str(), NULL, NULL);
@@ -168,116 +190,108 @@ int main(int argc, char** argv){
         delete[] build_log;
     }
     except(sbd_err == CL_SUCCESS, "can't build program");
-    cl_kernel originalLoop_kernel = clCreateKernel(sbd_program, "original_loop", &sbd_err);
+    cl_kernel mandelbrot_kernel = clCreateKernel(sbd_program, "mandelbrot", &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create kernel");
-    cl_kernel transformedLoop_kernel = clCreateKernel(sbd_program, "transformed_loop_after_blocking", &sbd_err);
+    cl_kernel mandelbrot_vectorized_kernel = clCreateKernel(sbd_program, "mandelbrot_vectorized", &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create kernel");
     LSB_Rec(0);
 
     //memory setup
     LSB_Set_Rparam_string("region", "device_side_buffer_setup");
     LSB_Res();
-    cl_mem sbd_a = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,a_bytes,NULL,&sbd_err);
-    except(sbd_err == CL_SUCCESS, "can't create device memory a");
-    cl_mem sbd_b = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,b_bytes,NULL,&sbd_err);
-    except(sbd_err == CL_SUCCESS, "can't create device memory b");
+    cl_mem sbd_map = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,map_bytes,NULL,&sbd_err);
+    except(sbd_err == CL_SUCCESS, "can't create device memory map");
 
-    float* a  = new float[M*M]; 
-    float* b  = new float[M*M];
+    int* map  = new int[M*M]; 
     LSB_Rec(0);
 
     int sample_size = 100;
     if(strcmp(mode, "aiwc")==0){
         sample_size = 1;
     }
-    //simple case
-    LSB_Set_Rparam_string("kernel","original_loop");
+    //mandelbrot case
+    LSB_Set_Rparam_string("kernel","mandelbrot");
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
-        randomise_payload(a,M*M);
-        randomise_payload(b,M*M);
+        zero_payload_as_integer(map,M*M);
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region","device_side_h2d_copy");
         LSB_Res();
-        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_map,CL_TRUE,0,map_bytes,map,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't write to device memory!");
         LSB_Rec(i);
 
         //run the kernel
         size_t global_work[2] = {static_cast<size_t>(M),static_cast<size_t>(M)};
         //size_t local_work[2] = {static_cast<size_t>(w),static_cast<size_t>(w)}; 
-        //on one thread
+        // just one thread
         size_t local_work[2] = {static_cast<size_t>(M),static_cast<size_t>(M)}; 
 
-        LSB_Set_Rparam_string("region","original_loop_kernel");
+        LSB_Set_Rparam_string("region","mandelbrot_kernel");
         LSB_Res();
-        sbd_err  = clSetKernelArg(originalLoop_kernel, 0, sizeof(cl_mem), &sbd_a);
-        sbd_err |= clSetKernelArg(originalLoop_kernel, 1, sizeof(cl_mem), &sbd_b);
+        sbd_err  = clSetKernelArg(mandelbrot_kernel, 0, sizeof(cl_mem), &sbd_map);
         except(sbd_err == CL_SUCCESS, "failed to set kernel arguments");
 
-        sbd_err = clEnqueueNDRangeKernel(sbd_queue, originalLoop_kernel, 2, NULL, global_work,local_work,0,NULL,NULL);
-        except(sbd_err == CL_SUCCESS, "failed to execute kernel");
+        sbd_err = clEnqueueNDRangeKernel(sbd_queue, mandelbrot_kernel, 1, NULL, global_work,local_work,0,NULL,NULL);
+        except(sbd_err == CL_SUCCESS, "failed to execute kernel (with error "+std::to_string(sbd_err)+")");
         clFinish(sbd_queue);
         
         LSB_Rec(i);
         
         LSB_Set_Rparam_string("region","device_side_d2h_copy");
         LSB_Res();
-        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_map,CL_TRUE,0,map_bytes,map,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
     }
-    //loop blocking case
-    LSB_Set_Rparam_string("kernel","transformed_loop_after_blocking");
+    std::cout << "Mandelbrot:" << std::endl;
+    write_matrix_to_file(map, M, M, "mandelbrot.csv");
+    //print_payload_as_integer(map,M*M);
+    //mandelbrot vectorized case
+    LSB_Set_Rparam_string("kernel","mandelbrot_vectorized");
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
-        randomise_payload(a,M*M);
-        randomise_payload(b,M*M);
+        zero_payload_as_integer(map,M*M);
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region","device_side_h2d_copy");
         LSB_Res();
-        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
-        sbd_err |= clEnqueueWriteBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err  = clEnqueueWriteBuffer(sbd_queue,sbd_map,CL_TRUE,0,map_bytes,map,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't write to device memory!");
         LSB_Rec(i);
 
         //run the kernel
         size_t global_work[2] = {static_cast<size_t>(M),static_cast<size_t>(M)};
         //size_t local_work[2] = {static_cast<size_t>(w),static_cast<size_t>(w)}; 
-        //on one thread
+        // just one thread
         size_t local_work[2] = {static_cast<size_t>(M),static_cast<size_t>(M)}; 
-        LSB_Set_Rparam_string("region","transformed_loop_after_blocking_kernel");
+
+        LSB_Set_Rparam_string("region","mandelbrot_vectorized_kernel");
         LSB_Res();
-        sbd_err  = clSetKernelArg(transformedLoop_kernel, 0, sizeof(cl_mem), &sbd_a);
-        sbd_err |= clSetKernelArg(transformedLoop_kernel, 1, sizeof(cl_mem), &sbd_b);
+        sbd_err  = clSetKernelArg(mandelbrot_vectorized_kernel, 0, sizeof(cl_mem), &sbd_map);
         except(sbd_err == CL_SUCCESS, "failed to set kernel arguments");
 
-        sbd_err = clEnqueueNDRangeKernel(sbd_queue, transformedLoop_kernel, 2, NULL, global_work,local_work,0,NULL,NULL);
-
-        except(sbd_err == CL_SUCCESS, "failed to execute kernel");
-
+        sbd_err = clEnqueueNDRangeKernel(sbd_queue, mandelbrot_vectorized_kernel, 1, NULL, global_work,local_work,0,NULL,NULL);
+        except(sbd_err == CL_SUCCESS, "failed to execute kernel (with error "+std::to_string(sbd_err)+")");
         clFinish(sbd_queue);
+        
         LSB_Rec(i);
         
         LSB_Set_Rparam_string("region","device_side_d2h_copy");
         LSB_Res();
-        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_map,CL_TRUE,0,map_bytes,map,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
     }
-    //print_payload(a,M*M);
-    delete a;
-    delete b;
+    std::cout << "\nMandelbrot vectorized:" << std::endl;
+    write_matrix_to_file(map, M, M, "mandelbrot-vectorized.csv");
+    //print_payload_as_integer(map,M*M);
+    delete map;
 
-    clReleaseMemObject(sbd_b);
-    clReleaseMemObject(sbd_a);
-    clReleaseKernel(transformedLoop_kernel);
-    clReleaseKernel(originalLoop_kernel);
+    clReleaseMemObject(sbd_map);
+    clReleaseKernel(mandelbrot_kernel);
+    clReleaseKernel(mandelbrot_vectorized_kernel);
     clReleaseProgram(sbd_program);
     clReleaseCommandQueue(sbd_queue);
     clReleaseContext(sbd_context);
