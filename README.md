@@ -1,4 +1,13 @@
 
+Guiding Device Specific Optimization using Architecture-Independent Metrics
+---------------------------------------------------------------------------
+
+<!--
+This artefact now uses binder -- automatic cloud hosting of Jupyter workbooks with support for docker. So if you want to avoid all the steps mentioned below, simply click the binder badge.
+
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/BeauJoh/aiwc-opencl-based-architecture-independent-workload-characterization-artefact/master)
+-->
+
 #Installation
 
 This project uses Docker to facilitate reproducibility. As such, it has the following dependencies:
