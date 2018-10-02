@@ -8,7 +8,7 @@ This artefact now uses binder -- automatic cloud hosting of Jupyter workbooks wi
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/BeauJoh/aiwc-opencl-based-architecture-independent-workload-characterization-artefact/master)
 -->
 
-#Installation
+# Installation
 
 This project uses Docker to facilitate reproducibility. As such, it has the following dependencies:
 
@@ -17,13 +17,13 @@ This project uses Docker to facilitate reproducibility. As such, it has the foll
 * nvidia-docker2, install instructions found [here](https://github.com/NVIDIA/nvidia-docker)
 * Docker nvidia container, installed with: `sudo apt install nvidia-container-runtime`
 
-#Build
+# Build
 
 To generate a docker image named guiding-optimisation, run:
 
 `docker build -t guiding-optimisation .`
 
-#Run
+# Run
 
 To start the docker image run:
 
