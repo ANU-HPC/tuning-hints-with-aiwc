@@ -27,6 +27,9 @@ workload characterisation, analysis
 
 ----------------------------------------------------------------
 
+<!--- Focus of the paper: AIWC is useful to guide optimization for developers,
+ We must present a subset of derived AIWC metrics to allow developers to more easily compare their changes and the AIWC features --->
+
 Porting large HPC codes, such as those seen in weather forecasting and othes supercomputing workloads, from conventional CPU architectures to accelerators is intensive on the developer.
 Even heterogeneous languages -- like OpenCL -- which support having a single implementation of a code often don't alleviate this process since algorithmic optimisations are needed to fully utilise the selected accelerator hardware.
 Worst still, the classic methods of focusing optimisation effort on the longest running kernels is often cumbersome and wasteful -- consider cases where kernels are quite already efficient but the low hanging fruit are missed, for some of the worst kernels which have shorter running times have simple optimisations which matter once the energy usage, operating costs and size of these systems are considered.
