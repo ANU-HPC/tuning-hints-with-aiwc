@@ -20,7 +20,7 @@ bibliography: ./bibliography/bibliography.bib
 <!--IEEE needs the keywords to be set here :(-->
 \iftoggle{IEEE-BUILD}{
 \begin{IEEEkeywords}
-workload characterisation, analysis
+productivity tools, analysis
 \end{IEEEkeywords}
 }{}
 
@@ -50,10 +50,11 @@ Executed runtimes are collected by timing the codes on selected devices.
 The tool AIWC was originally built for automated device selection.
 This differs to the new goal of guiding a developer for kernel optimization.
 For device selection, a large number of features were selected to find any meaningful workload characteristics to form the basis of a predictive model.
-However, statistical models, such as the random forest model -- used with AIWC previously [ref @aiwc] -- excels at identifying the and can handle redundencies over many dimensions of data.
-Developers require a smaller subset of AIWC metrics to compare when considering optimisation, as such additional derived metrics and extensions to the AIWC plugin are described.
+Statistical models, such as the random forest model -- used with AIWC previously [ref @aiwc] -- excels at identifying and handling redundancies over many dimensions of data.
+However, developers require a smaller subset of AIWC metrics to compare when considering optimisation, as such additional derived metrics and extensions to the AIWC plugin are presented and address communication and utilization.
 
 \todo[inline]{fix this reference to the DRSN HPCS paper}
+
 
 ## Communication
 
@@ -71,21 +72,31 @@ This is performed automatically during the statistical processing scripts presen
 
 \todo[inline]{cite the artefact}
 
-## Utilization / Occupancy
+
+## Utilization
 
 Resource pressure is computed as the number of registers needed to complete the kernel implementation of the algorithm.
-However, since there are no registers used in LLVM intermediate representation -- indeed, this is one of the final stages of compiler optimization required where performance is device critical.
-Additionally, since oclgrind only simulates LLVM IR codes, many labels at this stage are unnamed, infact, the only labels with names are those corresponding to loads and stores.
-Thus, instead of examining the final machine codes used, we present the *Freedom to Reorder* as the number of operations executed between a load and/or a store. These number of operations between unique labels present regions of differing sizes througout the completion of a kernel, and reflects the opportunity of pipeline reordering for an out-of-order CPU to act over this region.
+However, since there are no registers used in LLVM intermediate representation; in actuality this is one of the final stages of compiler optimization required where assignment is device specific and cannot be measured by AIWC.
+Since oclgrind only simulates LLVM IR codes, many labels at this stage are unnamed, infact, the only labels with names are those corresponding to loads and stores.
+Thus, instead of examining the final machine codes used, we present the **Freedom to Reorder** as the number of operations executed between a load and/or a store. These number of operations between unique labels present regions of differing sizes througout the completion of a kernel, and reflects the opportunity of pipeline reordering for an out-of-order CPU to act over this region.
 This higher level of abstraction serves as a baseline measure of resource pressure, since it presents the total number of concurrent unique loads and stores and shows the maximum possible flexibility for an out-of-order core to reorder the queue of instructions for the execution of each region.
-
-The number of threads active is also device specific, we instead present the granularity of the algorithim, which shows the degree of parallelism.
-This is an indirect measure of threads active since we show that the algorithm can support this amount of concurrent processing, which in turn can identify bottlenecks in either the target architecture -- if it supports fewer cores than there are threads -- or vice versa.
+The number of threads active is also device specific, we instead present the granularity of the algorithm, which shows the degree of parallelism.
+This is an indirect measure of threads active since we show that the algorithm can support this amount of concurrent processing, which in turn can identify bottlenecks in either the target architecture -- if it supports fewer cores than there are threads or vice versa.
+**Resource Pressure** is presented using the number of threads $\times$ the average number of loads and stores per thread.
   
 
-# CPU best practices
+# Reduced AIWC Metrics
 
-# GPU best practices
+<!--- Present brief description of final selected AIWC metrics -- is there a scientific way to identify this subset? --->
+
+
+# Device Optimizations
+
+
+## CPU best practices
+
+
+## GPU best practices
 
 Performance optimization revolves around three basic strategies:
 
@@ -95,15 +106,20 @@ Performance optimization revolves around three basic strategies:
 
 The focus of strategy 1) is to ensure as much data parallelism is exposed as possible, the suitabilty of a kernel mapping effectively on a GPU device is thus expected to be shown by having a high "parallelism" AIWC metrics. \todo[inline]{look at the list and speculate around the principal metrics.}
 
+
 # Evaluation
 
 Per kernel breakdown
 
+
 ## Case Study 1
+
 
 ## Case Study 2
 
+
 ## Case Study 3
+
 
 # Automatic Suggestions
 
@@ -111,3 +127,4 @@ If AIWC metric *x* falls within range *y* we can conclude the algorithm is best 
 However, we can also speculate around the ideal range for each device, or at least identify the threshold around what is suitable \todo[inline]{how do we suggest whether to go up or down an AIWC metric range -- or which code characteristics improve this?}
 
 \todo[inline]{study of two different matrix multiply codes that examine how AIWC metrics change over cache-critical and cache-oblivious workloads}
+
