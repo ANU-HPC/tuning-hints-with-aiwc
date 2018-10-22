@@ -24,6 +24,7 @@ ENV PREDICTIONS /opencl-predictions-with-aiwc
 ENV EOD /OpenDwarfs
 ENV OCL_INC /opt/khronos/opencl/include
 ENV OCL_LIB /opt/intel/opencl-1.2-6.4.0.25/lib64
+ENV PANDOC /pandoc
 
 # Install essential packages.
 RUN apt-get update
@@ -141,9 +142,23 @@ WORKDIR $EOD/build
 RUN ../configure --with-libscibench=$LSB
 RUN make
 
-CMD ["/bin/bash"]
+# Install Pandoc and Latex to build the paper
+RUN apt-get install --no-install-recommends -y lmodern texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-science python-pip python-dev
+RUN wget https://bootstrap.pypa.io/ez_setup.py -O - | python
+RUN pip2 install setuptools && pip2 install wheel && pip2 install pandocfilters pandoc-fignos
+WORKDIR $PANDOC
+RUN wget https://github.com/jgm/pandoc/releases/download/1.19.2/pandoc-1.19.2-1-amd64.deb && apt-get install -y ./pandoc-1.19.2-1-amd64.deb
+RUN wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.0.0/linux-ghc8-pandoc-2-0.tar.gz
+RUN tar -xvf linux-ghc8-pandoc-2-0.tar.gz
+RUN mv pandoc-crossref /usr/bin/
 
+#container variables and startup...
 WORKDIR /guiding-optimisation-with-aiwc
 ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARYPATH}"
 ENV PATH "${PATH}:${OCLGRIND}/bin}"
+
+#start beakerx/jupyter by default
+#CMD ["beakerx","--allow-root"]
+
+CMD ["/bin/bash"]
 

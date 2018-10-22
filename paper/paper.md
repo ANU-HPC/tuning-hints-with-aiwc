@@ -75,9 +75,9 @@ This is performed automatically during the statistical processing scripts presen
 
 Resource pressure is computed as the number of registers needed to complete the kernel implementation of the algorithm.
 However, since there are no registers used in LLVM intermediate representation -- indeed, this is one of the final stages of compiler optimization required where performance is device critical.
-Instead of examining the final machine codes used, we examine the number of labels -- or unique instruction names -- required to complete a kernel.
-This higher level of abstraction serves as a baseline measure of resource pressure, since it provides the maximum possible number of registers required to complete the kernel execution.
-A caveat of this approach is that it is an abstraction and as such free from any vendor specific compiler optimisation which would attempt to minimize the number of registers required to finish completion.
+Additionally, since oclgrind only simulates LLVM IR codes, many labels at this stage are unnamed, infact, the only labels with names are those corresponding to loads and stores.
+Thus, instead of examining the final machine codes used, we present the *Freedom to Reorder* as the number of operations executed between a load and/or a store. These number of operations between unique labels present regions of differing sizes througout the completion of a kernel, and reflects the opportunity of pipeline reordering for an out-of-order CPU to act over this region.
+This higher level of abstraction serves as a baseline measure of resource pressure, since it presents the total number of concurrent unique loads and stores and shows the maximum possible flexibility for an out-of-order core to reorder the queue of instructions for the execution of each region.
 
 The number of threads active is also device specific, we instead present the granularity of the algorithim, which shows the degree of parallelism.
 This is an indirect measure of threads active since we show that the algorithm can support this amount of concurrent processing, which in turn can identify bottlenecks in either the target architecture -- if it supports fewer cores than there are threads -- or vice versa.
