@@ -156,6 +156,8 @@ RUN wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.0.0
 RUN tar -xvf linux-ghc8-pandoc-2-0.tar.gz
 RUN mv pandoc-crossref /usr/bin/
 
+RUN apt-get install -y vim
+
 #container variables and startup...
 WORKDIR /guiding-optimisation-with-aiwc
 ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARYPATH}"
