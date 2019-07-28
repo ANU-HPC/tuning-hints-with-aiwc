@@ -69,8 +69,11 @@ bool different_payload(float*in, float* out, unsigned int size){
 }
 
 inline void print_payload(float*x,unsigned int size){
+    int dim = (int)(sqrt((float)size));
     for(int i = 0; i < size; i++){
         std::cout << x[i] << ' ';
+        if (!(i % dim))
+            std::cout << std::endl;
     }
     std::cout << std::endl;
 }
