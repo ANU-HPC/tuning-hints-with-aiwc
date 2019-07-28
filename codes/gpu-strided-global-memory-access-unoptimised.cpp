@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <cstring>
 #include <cassert>
@@ -6,8 +5,12 @@
 #include <ctime>
 #include <cstdlib>
 #include <random>
+#include <cstdio>
 #include <liblsb.h>
-
+extern "C" {
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_blas.h>
+}
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
     #include <OpenCL/cl.h>
@@ -45,6 +48,13 @@ inline void copy_payload(float*in,float*out,unsigned int size){
     }
 }
 
+
+inline void identity(float* x, unsigned int size, int dim) {
+    for (int i = 0; i < size; i++) {
+        x[i] = (i % (dim+1)) ? 0 : 1;
+    }
+}
+
 bool same_payload(float* in, float* out, unsigned int size){
     for(int i = 0; i < size; i++){
         if (abs(out[i] - in[i]) > EPSILON){
@@ -63,6 +73,26 @@ inline void print_payload(float*x,unsigned int size){
         std::cout << x[i] << ' ';
     }
     std::cout << std::endl;
+}
+
+inline void check_matrix_multiply(float* a, float* b, float* c, size_t M) {
+    gsl_matrix_float* a_matrix = gsl_matrix_float_alloc(M, M);
+    gsl_matrix_float* b_matrix = gsl_matrix_float_alloc(M, M);
+    gsl_matrix_float* c_matrix = gsl_matrix_float_alloc(M, M);
+    for (int j = 0; j < M; j++) {
+        for (int k = 0; k < M; k++) {
+            gsl_matrix_float_set(a_matrix, j,k, (double) a[j*M + k]);
+            gsl_matrix_float_set(b_matrix, j,k, (double) b[j*M + k]);
+        }
+    }
+    gsl_blas_sgemm(CblasNoTrans, CblasNoTrans, 1.0, a_matrix, b_matrix, 0.0, c_matrix); 
+    for (int j = 0; j < M; j++) {
+        for (int k = 0; k < M; k++) {
+            except (c[j*M + k] - gsl_matrix_float_get(c_matrix, j, k) > (double)EPSILON 
+                || c[j*M + k] - gsl_matrix_float_get(c_matrix, j, k) < -(double)EPSILON,
+                "matrix multiplication algorithm is wrong");
+        }
+    }
 }
 
 int main(int argc, char** argv){
@@ -125,7 +155,7 @@ int main(int argc, char** argv){
 
     //set-up memory for payload/problem size
     size_t KiB;
-    if(strcmp(problem_size, "tiny")==0)       {KiB = 31;}    //  32 KiB < L1
+    if(strcmp(problem_size, "tiny")==0)       {KiB = 32 ;}    //  32 KiB < L1
     else if(strcmp(problem_size, "small")==0) {KiB = 255;}   // 256 KiB < L2
     else if(strcmp(problem_size, "medium")==0){KiB = 7900;}  //8192 KiB < L3
     else if(strcmp(problem_size, "large")==0) {KiB = 16384;} //8192 KiB > L3 
@@ -146,7 +176,7 @@ int main(int argc, char** argv){
 
 
     std::cout << "M = " << M << " N = " << N << " total KiB = " <<  (c_bytes+a_bytes+b_bytes)/1024 << std::endl;
-
+    
     LSB_Rec(0);
 
     
@@ -187,9 +217,9 @@ int main(int argc, char** argv){
     cl_mem sbd_c = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,c_bytes,NULL,&sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create device memory c");
 
-    float* a  = new float[M*w]; 
-    float* b  = new float[N*w];
-    float* c  = new float[M*N];
+    float* a  = new float[M*w](); 
+    float* b  = new float[N*w]();
+    float* c  = new float[M*N]();
     LSB_Rec(0);
 
     int sample_size = 100;
@@ -201,8 +231,26 @@ int main(int argc, char** argv){
     for(int i = 0; i < sample_size; i++){
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
         randomise_payload(a,M*w);
-        randomise_payload(b,N*w);
+        identity(b,N*w, N);
+        print_payload(b, N*w);
         randomise_payload(c,M*N);
+        // for (int t = 0; t < M; t++) {
+        //     for (int u = 0; u < M; u++) {
+        //         printf("%f ", a[t*M + u]);
+        //     }
+        //     printf("\n");
+        // }
+    
+        gsl_matrix* a_matrix = gsl_matrix_alloc(M, N);
+        gsl_matrix* b_matrix = gsl_matrix_alloc(M, N);
+        gsl_matrix* c_matrix = gsl_matrix_alloc(M, N);
+        for (int j = 0; j < M; j++) {
+            for (int k = 0; k < N; k++) {
+                gsl_matrix_set(a_matrix, j, k, (double) a[j*N + k]);
+                gsl_matrix_set(b_matrix, j, k, (double) b[j*N + k]);
+            }
+        }
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, a_matrix, b_matrix, 0.0, c_matrix); 
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region","device_side_h2d_copy");
@@ -233,11 +281,23 @@ int main(int argc, char** argv){
         
         LSB_Set_Rparam_string("region","device_side_d2h_copy");
         LSB_Res();
-        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
-        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        //FIXME: Don't see why we must copy a and b back d2h. If necessary, pls uncomment
+        //sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        //sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
         sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
         except(sbd_err == CL_SUCCESS, "can't read from device memory");
         LSB_Rec(i);
+        // c[256] = 17.0;
+        except(same_payload(a,c,N*w), "a, c not equal");
+        for (int j = 0; j < M; j++)
+            for (int k = 0; k < N; k++) {
+                if (c[j*N + k] - gsl_matrix_get(c_matrix, j, k) > (double)EPSILON 
+                 || c[j*N + k] - gsl_matrix_get(c_matrix, j, k) < -(double)EPSILON) {
+                    printf("matrix multiplication algorithm is wrong %d %d", j, k);
+                    
+                    except(false, "matrix multiply wrong");
+                 }
+            }
     }
     //coalescedMultiply case
     LSB_Set_Rparam_string("kernel","coalescedMultiply");
@@ -345,4 +405,5 @@ int main(int argc, char** argv){
     delete sbd_platforms;
     LSB_Finalize();
 }
+
 
