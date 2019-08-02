@@ -157,8 +157,6 @@ RUN tar -xvf linux-ghc8-pandoc-2-0.tar.gz
 RUN mv pandoc-crossref /usr/bin/
 
 RUN apt-get install -y vim
-RUN apt-get install -y tree libgsl23 libgsl-dev 
-#libgsl23 version dependent
 
 #container variables and startup...
 WORKDIR /guiding-optimisation-with-aiwc
