@@ -1,7 +1,7 @@
 all: gpu-stride cpu-loop-block cpu-mandelbrot-vectorization aiwc-tester #fdtd 
 
 gpu-stride: gpu-strided-global-memory-access-unoptimised.cpp
-	g++ gpu-strided-global-memory-access-unoptimised.cpp -o gpu-stride -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -L/usr/lib/x86_64-linux-gnu/ -lgsl -lgslcblas -std=c++11 
+	g++ gpu-strided-global-memory-access-unoptimised.cpp -o gpu-stride -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -L/usr/lib/x86_64-linux-gnu/ -std=c++11 
 
 cpu-loop-block: cpu-loop-blocking.cpp
 	g++ cpu-loop-blocking.cpp -o cpu-loop-block -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
@@ -24,6 +24,9 @@ $(LIB):
 test: gpu-stride
 	./gpu-stride ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 runtime;
 	$(OCLGRIND)/bin/oclgrind --workload-characterisation ./gpu-stride ./gpu-strided-global-memory-access-unoptimised.cl small 0 0 aiwc
+
+debug:
+	g++ gpu-strided-global-memory-access-unoptimised.cpp -g -o gpu-stride -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -L/usr/lib/x86_64-linux-gnu/ -std=c++11
 
 aiwc-tester: aiwc-tester.cpp
 	g++ aiwc-tester.cpp -o aiwc-tester -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11

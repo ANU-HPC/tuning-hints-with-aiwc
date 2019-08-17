@@ -28,6 +28,7 @@ ENV PANDOC /pandoc
 
 # Install essential packages.
 RUN apt-get update
+RUN apt-get upgrade -y
 RUN apt-get install --no-install-recommends -y software-properties-common \
     ocl-icd-opencl-dev \
     pkg-config \
@@ -36,7 +37,8 @@ RUN apt-get install --no-install-recommends -y software-properties-common \
     make \
     zlib1g-dev \
     apt-transport-https \
-    wget
+    wget \
+    less
 
 # Install cmake -- newer version than with apt
 RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr
@@ -157,13 +159,18 @@ RUN tar -xvf linux-ghc8-pandoc-2-0.tar.gz
 RUN mv pandoc-crossref /usr/bin/
 
 RUN apt-get install -y vim
-RUN apt-get install -y tree libgsl23 libgsl-dev 
-#libgsl23 version dependent
+RUN apt-get install -y tree
+RUN apt-get install -y gdb gdbserver
+RUN apt-get install -y curl
+
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 
 #container variables and startup...
-WORKDIR /guiding-optimisation-with-aiwc
+WORKDIR /tuning-hints-with-aiwc
 ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARYPATH}"
 ENV PATH "${PATH}:${OCLGRIND}/bin}"
+
+RUN echo "export PATH=$PATH:$HOME/.cargo/bin" >> ~/.bashrc
 
 #start beakerx/jupyter by default
 #CMD ["beakerx","--allow-root"]

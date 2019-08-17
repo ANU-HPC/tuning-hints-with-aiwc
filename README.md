@@ -27,7 +27,7 @@ To generate a docker image named guiding-optimisation, run:
 
 To start the docker image run:
 
-`docker run --runtime=nvidia -it --mount src=`pwd`,target=/guiding-optimisation-with-aiwc,type=bind -p 8888:8888 --net=host adi/guiding-optimisation`
+`docker run --runtime=nvidia -it --mount src=`pwd`,target=/tuning-hints-with-aiwc,type=bind -p 8888:8888 -p 9091:9091 --net=host adi/tuning-hints-with-aiwc`
 
 And run the codes with:
 `cd /guiding-optimisation-with-aiwc/codes`

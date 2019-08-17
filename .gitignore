@@ -1,3 +1,6 @@
 *.swp
 .ipynb_checkpoints
 .lmkrc
+codes/gpu-stride
+myGEMM
+codes/gpu-strided-rust
