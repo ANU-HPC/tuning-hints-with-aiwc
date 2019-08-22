@@ -60,6 +60,7 @@ __kernel void sharedABMultiply(__global float *A, __global float* B, __global fl
     const int globalCol = get_global_id(1);
     
     float sum = 0.0f;
+<<<<<<< HEAD
     const int numTiles = N / TILE_DIM;
 
     for (int i = 0; i < numTiles; i++) {
@@ -79,6 +80,13 @@ __kernel void sharedABMultiply(__global float *A, __global float* B, __global fl
             sum += aTile[localRow][k]* bTile[localCol][k]; //???
         }
         barrier(CLK_LOCAL_MEM_FENCE);
+=======
+    aTile[get_local_id(1)][get_local_id(0)] = a[row*TILE_DIM+get_local_id(0)];
+    bTile[get_local_id(1)][get_local_id(0)] = b[get_local_id(1)*N+col];
+    barrier(CLK_LOCAL_MEM_FENCE);
+    for (int i = 0; i < TILE_DIM; i++) {
+        sum += aTile[get_local_id(1)][i]* bTile[i][get_local_id(0)];
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
     }
 
     C[globalRow*N+globalCol] = sum;

@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <cstring>
 #include <cassert>
@@ -5,8 +6,12 @@
 #include <ctime>
 #include <cstdlib>
 #include <random>
+<<<<<<< HEAD
 #include <cstdio>
 #include <liblsb.h> 
+=======
+#include <liblsb.h>
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
 
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
@@ -45,6 +50,7 @@ inline void copy_payload(float*in,float*out,unsigned int size){
     }
 }
 
+<<<<<<< HEAD
 
 inline void identity(float* x, unsigned int size, int dim) {
     for (int i = 0; i < size; i++) {
@@ -52,6 +58,8 @@ inline void identity(float* x, unsigned int size, int dim) {
     }
 }
 
+=======
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
 bool same_payload(float* in, float* out, unsigned int size){
     for(int i = 0; i < size; i++){
         if (abs(out[i] - in[i]) > EPSILON){
@@ -66,15 +74,18 @@ bool different_payload(float*in, float* out, unsigned int size){
 }
 
 inline void print_payload(float*x,unsigned int size){
-    int dim = (int)(sqrt((float)size));
     for(int i = 0; i < size; i++){
         std::cout << x[i] << ' ';
+<<<<<<< HEAD
         if (!((i+1) % dim))
             std::cout << std::endl;
+=======
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
     }
     std::cout << std::endl;
 }
 
+<<<<<<< HEAD
 inline void check_matrix_multiply(float* a, float* b, float* c, size_t M) {
     float c_calc[M][M];
     float sum = (float)0.0;
@@ -91,6 +102,8 @@ inline void check_matrix_multiply(float* a, float* b, float* c, size_t M) {
     }
 }
 
+=======
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
 int main(int argc, char** argv){
 
     //extract kernel -- ./sbd <kernel source> <tiny/small/medium/large> <platform id> <device id>
@@ -151,8 +164,13 @@ int main(int argc, char** argv){
 
     //set-up memory for payload/problem size
     size_t KiB;
+<<<<<<< HEAD
 if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
     else if(strcmp(problem_size, "small")==0) {KiB = 256;}   // 256 KiB < L2
+=======
+    if(strcmp(problem_size, "tiny")==0)       {KiB = 31;}    //  32 KiB < L1
+    else if(strcmp(problem_size, "small")==0) {KiB = 255;}   // 256 KiB < L2
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
     else if(strcmp(problem_size, "medium")==0){KiB = 7900;}  //8192 KiB < L3
     else if(strcmp(problem_size, "large")==0) {KiB = 16384;} //8192 KiB > L3 
     else if(strcmp(problem_size, "huge")==0)  {KiB = 131072;}//
@@ -171,7 +189,7 @@ if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
 
 
     std::cout << "M = " << M << " N = " << N << " total KiB = " <<  (c_bytes+a_bytes+b_bytes)/1024 << std::endl;
-    
+
     LSB_Rec(0);
 
     
@@ -217,10 +235,16 @@ if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
     cl_mem sbd_c = clCreateBuffer(sbd_context,CL_MEM_READ_WRITE,c_bytes,NULL,&sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create device memory c");
 
+<<<<<<< HEAD
     float* a  = new float[M*N](); 
     float* b  = new float[N*N]();
     float* c  = new float[M*N]();
     
+=======
+    float* a  = new float[M*w]; 
+    float* b  = new float[N*w];
+    float* c  = new float[M*N];
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
     LSB_Rec(0);
 
     int sample_size = 100;
@@ -233,12 +257,18 @@ if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
     for (int i = 0; i < sample_size; i++) {
 
         LSB_Set_Rparam_string("region", "host_side_initialise_buffers");
+<<<<<<< HEAD
 
         randomise_payload(a, M * N);
         randomise_payload(b, N * M);
         //identity(b, M*N, M);
         randomise_payload(c, M * M);
 
+=======
+        randomise_payload(a,M*w);
+        randomise_payload(b,N*w);
+        randomise_payload(c,M*N);
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
         LSB_Rec(i);
 
         LSB_Set_Rparam_string("region", "device_side_h2d_copy");
@@ -270,6 +300,7 @@ if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
 
         LSB_Set_Rparam_string("region", "device_side_d2h_copy");
         LSB_Res();
+<<<<<<< HEAD
         //FIXME: Don't see why we must copy a and b back d2h. If necessary, pls uncomment
         sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
         sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
@@ -278,6 +309,13 @@ if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
         LSB_Rec(i);
 
         check_matrix_multiply(a, b, c, M);
+=======
+        sbd_err  = clEnqueueReadBuffer(sbd_queue,sbd_a,CL_TRUE,0,a_bytes,a,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_b,CL_TRUE,0,b_bytes,b,0,NULL,NULL);
+        sbd_err |= clEnqueueReadBuffer(sbd_queue,sbd_c,CL_TRUE,0,c_bytes,c,0,NULL,NULL);
+        except(sbd_err == CL_SUCCESS, "can't read from device memory");
+        LSB_Rec(i);
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
     }
     
     //coalescedMultiply case
@@ -461,5 +499,4 @@ if(strcmp(problem_size, "tiny")==0)       {KiB = 31 ;}    //  32 KiB < L1
     delete sbd_platforms;
     LSB_Finalize();
 }
-
 

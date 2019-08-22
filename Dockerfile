@@ -159,11 +159,14 @@ RUN tar -xvf linux-ghc8-pandoc-2-0.tar.gz
 RUN mv pandoc-crossref /usr/bin/
 
 RUN apt-get install -y vim
+<<<<<<< HEAD
 RUN apt-get install -y tree
 RUN apt-get install -y gdb gdbserver
 RUN apt-get install -y curl
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+=======
+>>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
 
 #container variables and startup...
 WORKDIR /tuning-hints-with-aiwc
