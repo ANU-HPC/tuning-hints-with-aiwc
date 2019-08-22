@@ -32,9 +32,10 @@ __kernel void coalescedMultiply(const __global float* A,
     __private float sum = 0.0f;
 
     const int numTiles = N / TILE_DIM;
+    __private const int tiledRow = globalRow*N+ localCol;
     for (int i = 0; i < numTiles; i++) {
-        const int tiledRow = globalRow*N+i*TILE_DIM + localCol;
-        aTile[localRow][localCol] = A[tiledRow];
+       
+        aTile[localRow][localCol] = A[tiledRow+i*TILE_DIM];
         //aTile[localRow][localCol] = A[globalRow*N+localCol+i*TILE_DIM];
         barrier(CLK_LOCAL_MEM_FENCE);
         for (int k = 0; k < TILE_DIM; k++) {
@@ -51,7 +52,7 @@ __kernel void sharedABMultiply(__global float *A, __global float* B, __global fl
     __local float aTile[TILE_DIM][TILE_DIM],
                   bTile[TILE_DIM][TILE_DIM];
     
-    barrier(CLK_LOCAL_MEM_FENCE);
+    //barrier(CLK_LOCAL_MEM_FENCE);
 
     const int localRow = get_local_id(0);
     const int localCol = get_local_id(1);
@@ -59,8 +60,7 @@ __kernel void sharedABMultiply(__global float *A, __global float* B, __global fl
     const int globalRow = get_global_id(0);
     const int globalCol = get_global_id(1);
     
-    float sum = 0.0f;
-<<<<<<< HEAD
+    __private float sum = 0.0f;
     const int numTiles = N / TILE_DIM;
 
     for (int i = 0; i < numTiles; i++) {
@@ -77,16 +77,9 @@ __kernel void sharedABMultiply(__global float *A, __global float* B, __global fl
         //                             + N*(TILE_DIM*get_group_id(0) + localCol)]; // Implicit transpose
         barrier(CLK_LOCAL_MEM_FENCE);                
         for (int k = 0; k < TILE_DIM; k++) {
-            sum += aTile[localRow][k]* bTile[localCol][k]; //???
+            sum += aTile[localRow][k]* bTile[localCol][k];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
-=======
-    aTile[get_local_id(1)][get_local_id(0)] = a[row*TILE_DIM+get_local_id(0)];
-    bTile[get_local_id(1)][get_local_id(0)] = b[get_local_id(1)*N+col];
-    barrier(CLK_LOCAL_MEM_FENCE);
-    for (int i = 0; i < TILE_DIM; i++) {
-        sum += aTile[get_local_id(1)][i]* bTile[i][get_local_id(0)];
->>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
     }
 
     C[globalRow*N+globalCol] = sum;
@@ -118,61 +111,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/*
-    Coalesced and tiled calculations -- splitting the M*N matrix
-    into several k*k workgroups and calculating smartly after
-    coalescing into shared memory
-*/
-//__kernel void GEMM2(__global float *a,__global float *b,__global float *c, int N)
-// __kernel void GEMM2(  const __global float* A,
-//                       const __global float* B,
-//                       __global float* C,
-//                       const int N) {
-    
-//     // Thread identifiers
-//     const int row = get_local_id(0); // Local row ID (max: TS)
-//     const int col = get_local_id(1); // Local col ID (max: TS)
-//     const int globalRow = TILE_DIM*get_group_id(0) + row; // Row ID of C (0..M)
-//     const int globalCol = TILE_DIM*get_group_id(1) + col; // Col ID of C (0..N)
- 
-//     // Local memory to fit a tile of TS*TS elements of A and B
-//     __local float Asub[TILE_DIM][TILE_DIM];
-//     __local float Bsub[TILE_DIM][TILE_DIM];
- 
-//     // Initialise the accumulation register
-//     float acc = 0.0f;
-    
-//     // Loop over all tiles
-//     const int numTiles = N/TILE_DIM;
-//     for (int t=0; t<numTiles; t++) {
- 
-//         // Load one tile of A and B into local memory
-//         const int tiledRow = TILE_DIM*t + row;
-//         const int tiledCol = TILE_DIM*t + col;
-//         //Asub[col][row] = A[globalCol*N + tiledRow];
-//         //Bsub[col][row] = B[tiledCol*N + globalRow];
-
-//         Asub[col][row] = A[tiledCol*N + globalRow];
-//         Bsub[col][row] = B[globalCol*N + tiledRow];
- 
-//         // Synchronise to make sure the tile is loaded
-//         barrier(CLK_LOCAL_MEM_FENCE);
- 
-//         // Perform the computation for a single tile
-//         for (int k=0; k<TILE_DIM; k++) {
-//             //acc += Asub[col][k] * Bsub[k][row];
-//             acc += Asub[k][row] * Bsub[col][k];
-
-//         }
- 
-//         // Synchronise before loading the next tile
-//         barrier(CLK_LOCAL_MEM_FENCE);
-//     }
-//     // Store the final result in C32
-//     //C[globalCol + globalRow*N] = acc;32
-//     C[globalCol*N + globalRow] = acc;
-// }
-
 __kernel void GEMM2Multiply(const __global float* A,
                       const __global float* B,
                       __global float* C,
@@ -187,8 +125,6 @@ __kernel void GEMM2Multiply(const __global float* A,
 
     __local float ASub[TILE_DIM][TILE_DIM];
     __local float BSub[TILE_DIM][TILE_DIM];
-
-    barrier(CLK_LOCAL_MEM_FENCE);
 
     float acc = 0.0f;
 
@@ -317,3 +253,59 @@ __kernel void myGEMM3(const __global float* A,
 /*
 Wider data access instructions
 */
+
+
+/*
+    Coalesced and tiled calculations -- splitting the M*N matrix
+    into several k*k workgroups and calculating smartly after
+    coalescing into shared memory
+*/
+//__kernel void GEMM2(__global float *a,__global float *b,__global float *c, int N)
+// __kernel void GEMM2(  const __global float* A,
+//                       const __global float* B,
+//                       __global float* C,
+//                       const int N) {
+    
+//     // Thread identifiers
+//     const int row = get_local_id(0); // Local row ID (max: TS)
+//     const int col = get_local_id(1); // Local col ID (max: TS)
+//     const int globalRow = TILE_DIM*get_group_id(0) + row; // Row ID of C (0..M)
+//     const int globalCol = TILE_DIM*get_group_id(1) + col; // Col ID of C (0..N)
+ 
+//     // Local memory to fit a tile of TS*TS elements of A and B
+//     __local float Asub[TILE_DIM][TILE_DIM];
+//     __local float Bsub[TILE_DIM][TILE_DIM];
+ 
+//     // Initialise the accumulation register
+//     float acc = 0.0f;
+    
+//     // Loop over all tiles
+//     const int numTiles = N/TILE_DIM;
+//     for (int t=0; t<numTiles; t++) {
+ 
+//         // Load one tile of A and B into local memory
+//         const int tiledRow = TILE_DIM*t + row;
+//         const int tiledCol = TILE_DIM*t + col;
+//         //Asub[col][row] = A[globalCol*N + tiledRow];
+//         //Bsub[col][row] = B[tiledCol*N + globalRow];
+
+//         Asub[col][row] = A[tiledCol*N + globalRow];
+//         Bsub[col][row] = B[globalCol*N + tiledRow];
+ 
+//         // Synchronise to make sure the tile is loaded
+//         barrier(CLK_LOCAL_MEM_FENCE);
+ 
+//         // Perform the computation for a single tile
+//         for (int k=0; k<TILE_DIM; k++) {
+//             //acc += Asub[col][k] * Bsub[k][row];
+//             acc += Asub[k][row] * Bsub[col][k];
+
+//         }
+ 
+//         // Synchronise before loading the next tile
+//         barrier(CLK_LOCAL_MEM_FENCE);
+//     }
+//     // Store the final result in C32
+//     //C[globalCol + globalRow*N] = acc;32
+//     C[globalCol*N + globalRow] = acc;
+// }

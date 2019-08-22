@@ -1,11 +1,7 @@
 all: gpu-stride cpu-loop-block cpu-mandelbrot-vectorization aiwc-tester #fdtd 
 
 gpu-stride: gpu-strided-global-memory-access-unoptimised.cpp
-<<<<<<< HEAD
-	g++ gpu-strided-global-memory-access-unoptimised.cpp -o gpu-stride -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -L/usr/lib/x86_64-linux-gnu/ -std=c++11 
-=======
 	g++ gpu-strided-global-memory-access-unoptimised.cpp -o gpu-stride -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
->>>>>>> a2d5ca8e3a951e8c28dfc292799a552ebece7bf1
 
 cpu-loop-block: cpu-loop-blocking.cpp
 	g++ cpu-loop-blocking.cpp -o cpu-loop-block -lOpenCL -llsb -L$(LSB)/lib -I$(LSB)/include -std=c++11
