@@ -1,6 +1,5 @@
 # An Ubuntu environment configured for building the phd repo.
-FROM nvidia/opencl
-#FROM ubuntu:16.04
+FROM nvidia/opencl:devel-ubuntu16.04
 
 MAINTAINER Beau Johnston <beau.johnston@anu.edu.au>
 
@@ -9,84 +8,108 @@ MAINTAINER Beau Johnston <beau.johnston@anu.edu.au>
 # timezone.
 ENV DEBIAN_FRONTEND noninteractive
 
+# use the closest Ubuntu mirror
+RUN echo "deb mirror://mirrors.ubuntu.com/mirrors.txt bionic main restricted universe multiverse" > /etc/apt/sources.list \
+ && echo "deb mirror://mirrors.ubuntu.com/mirrors.txt bionic-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+ && echo "deb mirror://mirrors.ubuntu.com/mirrors.txt bionic-security main restricted universe multiverse" >> /etc/apt/sources.list \
+ && apt-get update
+
 # Setup the environment.
 ENV HOME /root
 ENV USER docker
-ENV LSB_SRC /libscibench-source
-ENV LSB /libscibench
-ENV LEVELDB_SRC /leveldb-source
-ENV LEVELDB_ROOT /leveldb
-ENV OCLGRIND_SRC /oclgrind-source
-ENV OCLGRIND /oclgrind
-ENV OCLGRIND_BIN /oclgrind/bin/oclgrind
-ENV GIT_LSF /git-lsf
-ENV PREDICTIONS /opencl-predictions-with-aiwc
-ENV EOD /OpenDwarfs
-ENV OCL_INC /opt/khronos/opencl/include
-ENV OCL_LIB /opt/intel/opencl-1.2-6.4.0.25/lib64
-ENV PANDOC /pandoc
 
 # Install essential packages.
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y software-properties-common \
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    apt-utils \
+    apt-transport-https \
+    build-essential \
+    cpio \
+    file \
+    git \
+    less \
+    make \
     ocl-icd-opencl-dev \
     pkg-config \
-    build-essential \
-    git \
-    make \
-    zlib1g-dev \
-    apt-transport-https \
+    sed \
+    software-properties-common \
     wget \
-    less
+    zlib1g-dev 
 
 # Install cmake -- newer version than with apt
 RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr
+
+# Install Intel CPU Runtime for OpenCL Applications 18.1 for Linux (OpenCL 1.2)
+RUN apt-get update && apt-get install -qqy \
+    lsb-core \
+    libnuma1 \
+ && export RUNTIME_URL="http://registrationcenter-download.intel.com/akdlm/irc_nas/vcp/15532/l_opencl_p_18.1.0.015.tgz" \
+    && export TAR=$(basename ${RUNTIME_URL}) \
+    && export DIR=$(basename ${RUNTIME_URL} .tgz) \
+    && wget -q ${RUNTIME_URL} \
+    && tar -xf ${TAR} \
+    && sed -i 's/decline/accept/g' ${DIR}/silent.cfg \
+    && ${DIR}/install.sh --silent ${DIR}/silent.cfg \
+;fi
 
 # Install OpenCL Device Query tool
 RUN git clone https://github.com/BeauJoh/opencl_device_query.git /opencl_device_query
 
 # Install LibSciBench
-RUN apt-get install --no-install-recommends -y llvm-3.9 llvm-3.9-dev clang-3.9 libclang-3.9-dev gcc g++
+ENV LSB /libscibench
+ENV LSB_SRC /libscibench-source
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    clang-3.9 \
+    g++ \
+    gcc \ 
+    libclang-3.9-dev \
+    llvm-3.9 \
+    llvm-3.9-dev
 RUN git clone https://github.com/spcl/liblsb.git $LSB_SRC
 WORKDIR $LSB_SRC
 RUN ./configure --prefix=$LSB
-RUN make
 RUN make install
 
 # Install leveldb (optional dependency for OclGrind)
+ENV LEVELDB_SRC /leveldb-source
+ENV LEVELDB_ROOT /leveldb
 RUN git clone https://github.com/google/leveldb.git $LEVELDB_SRC
 RUN mkdir $LEVELDB_SRC/build
 WORKDIR $LEVELDB_SRC/build
 RUN cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=$LEVELDB_ROOT
-RUN make
 RUN make install
 
 # Install OclGrind
+ENV OCLGRIND_SRC /oclgrind-source
+ENV OCLGRIND /oclgrind
+ENV OCLGRIND_BIN /oclgrind/bin/oclgrind
 RUN git clone https://github.com/BeauJoh/Oclgrind.git $OCLGRIND_SRC
-
 RUN mkdir $OCLGRIND_SRC/build
 WORKDIR $OCLGRIND_SRC/build
 ENV CC clang-3.9
 ENV CXX clang++-3.9
-
 RUN cmake $OCLGRIND_SRC -DUSE_LEVELDB=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_DIR=/usr/lib/llvm3.9/lib/cmake -DCLANG_ROOT=/usr/lib/clang/3.9.1 -DCMAKE_INSTALL_PREFIX=$OCLGRIND
-
-RUN make
 RUN make install
 
 # Install R and model dependencies
-RUN apt-get install --no-install-recommends -y dirmngr gnupg-agent
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    dirmngr \
+    gnupg-agent
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
-#RUN add-apt-repository 'deb [arch=amd64,i386] https://cran.rstudio.com/bin/linux/ubuntu xenial/'
 RUN add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
-RUN apt-get update
-RUN apt-get install --no-install-recommends -y r-base libcurl4-openssl-dev libssl-dev  liblapack-dev libblas-dev gfortran
-RUN Rscript -e "install.packages('devtools',repos = 'http://cran.us.r-project.org');"
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    gfortran \
+    libblas-dev \
+    libcurl4-openssl-dev \
+    liblapack-dev \
+    libssl-dev \
+    libxml2-dev \
+    r-base
+RUN Rscript -e "install.packages('devtools',repos = 'https://cloud.r-project.org');"
 RUN Rscript -e "devtools::install_github('RcppCore/RcppEigen')"
 RUN Rscript -e "devtools::install_github('imbs-hl/ranger')"
 
 # Install the git-lsf module
+ENV GIT_LSF /git-lsf
 WORKDIR /downloads
 RUN wget https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-linux-amd64-v2.5.1.tar.gz
 RUN mkdir $GIT_LSF
@@ -94,11 +117,20 @@ RUN tar -xvf git-lfs-linux-amd64-v2.5.1.tar.gz --directory $GIT_LSF
 WORKDIR $GIT_LSF
 RUN ./install.sh
 RUN git lfs install
+
 # Install the R model
+ENV PREDICTIONS /opencl-predictions-with-aiwc
 RUN git clone https://github.com/BeauJoh/opencl-predictions-with-aiwc.git $PREDICTIONS
 
 # Install beakerx
-RUN apt-get install --no-install-recommends -y python3-pip python3-setuptools python3-dev libreadline-dev libpcre3-dev libbz2-dev liblzma-dev
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    python3-dev \
+    python3-pip \
+    python3-setuptools \
+    libbz2-dev \
+    liblzma-dev \
+    libpcre3-dev \
+    libreadline-dev
 RUN pip3 install --upgrade pip
 RUN pip3 install tzlocal rpy2 pandas py4j ipywidgets requests beakerx \
     && beakerx install
@@ -116,30 +148,12 @@ RUN pip3 install -U 'lmk==0.0.14'
 # is used as: python3 ../opendwarf_grinder.py 2>&1 | lmk -
 # or: lmk 'python3 ../opendwarf_grinder.py'
 
-# Intel CPU OpenCL
-RUN apt-get update -q && apt-get install --no-install-recommends -yq alien wget clinfo \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Download the Intel OpenCL CPU runtime and convert to .deb packages
-RUN export RUNTIME_URL="http://registrationcenter-download.intel.com/akdlm/irc_nas/9019/opencl_runtime_16.1.1_x64_ubuntu_6.4.0.25.tgz" \
-    && export TAR=$(basename ${RUNTIME_URL}) \
-    && export DIR=$(basename ${RUNTIME_URL} .tgz) \
-    && wget -q ${RUNTIME_URL} \
-    && tar -xf ${TAR} \
-    && for i in ${DIR}/rpm/*.rpm; do alien --to-deb $i; done \
-    && rm -rf ${DIR} ${TAR} \
-    && dpkg -i *.deb \
-    && rm *.deb
-
-RUN mkdir -p /etc/OpenCL/vendors/ \
-    && echo "$OCL_LIB/libintelocl.so" > /etc/OpenCL/vendors/intel.icd
-
-# Let the system know where the OpenCL library can be found at load time.
-ENV LD_LIBRARY_PATH $OCL_LIB:$LD_LIBRARY_PATH
-
 # Install EOD
-RUN apt-get update && apt-get install --no-install-recommends -y autoconf libtool automake
+ENV EOD /OpenDwarfs
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    autoconf \
+    automake \
+    libtool
 RUN git clone https://github.com/BeauJoh/OpenDwarfs.git $EOD
 WORKDIR $EOD
 RUN ./autogen.sh
@@ -149,7 +163,15 @@ RUN ../configure --with-libscibench=$LSB
 RUN make
 
 # Install Pandoc and Latex to build the paper
-RUN apt-get install --no-install-recommends -y lmodern texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-science python-pip python-dev
+ENV PANDOC /pandoc
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    lmodern \
+    python-dev \
+    python-pip \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    texlive-latex-recommended \
+    texlive-science
 RUN wget https://bootstrap.pypa.io/ez_setup.py -O - | python
 RUN pip2 install setuptools && pip2 install wheel && pip2 install pandocfilters pandoc-fignos
 WORKDIR $PANDOC
@@ -158,14 +180,16 @@ RUN wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.0.0
 RUN tar -xvf linux-ghc8-pandoc-2-0.tar.gz
 RUN mv pandoc-crossref /usr/bin/
 
-RUN apt-get install -y vim
-RUN apt-get install -y tree
-RUN apt-get install -y gdb gdbserver
-RUN apt-get install -y curl
+RUN apt-get update && apt-get install -y \
+    curl \
+    gdb \
+    gdbserver \
+    tree \
+    vim
 #container variables and startup...
 WORKDIR /tuning-hints-with-aiwc
-ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARYPATH}"
-ENV PATH "${PATH}:${OCLGRIND}/bin}"
+ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARY_PATH}"
+ENV PATH "${PATH}:${OCLGRIND}/bin"
 
 RUN echo "export PATH=$PATH:$HOME/.cargo/bin" >> ~/.bashrc
 
