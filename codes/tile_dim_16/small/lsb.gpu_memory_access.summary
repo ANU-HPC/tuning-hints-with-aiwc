@@ -1,0 +1,5 @@
+region,time (ms)
+GEMM2Multiply_kernel,74.419922
+coalescedMultiply_kernel,70.5498045
+sharedABMultiply_kernel,65.7216795
+simpleMultiply_kernel,320.24804700000004
