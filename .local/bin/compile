@@ -3,4 +3,4 @@ cd codes
 make clean
 make debug
 pkill -e gdbserver
-gdbserver :9091 ./gpu-stride ./gpu-strided-global-memory-access-unoptimised.cl small 0 1 runtime
+gdbserver :9091 ./gpu-stride ./gpu-strided-global-memory-access-unoptimised.cl small 1 0 runtime

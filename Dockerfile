@@ -37,8 +37,7 @@ RUN apt-get install --no-install-recommends -y software-properties-common \
     make \
     zlib1g-dev \
     apt-transport-https \
-    wget \
-    less
+    wget
 
 # Install cmake -- newer version than with apt
 RUN wget -qO- "https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr
@@ -161,7 +160,6 @@ RUN mv pandoc-crossref /usr/bin/
 RUN apt-get install -y vim
 RUN apt-get install -y tree
 RUN apt-get install -y gdb gdbserver
-RUN apt-get install -y curl
 #container variables and startup...
 WORKDIR /tuning-hints-with-aiwc
 ENV LD_LIBRARY_PATH "${OCLGRIND}/lib:${LSB}/lib:./lib:${LD_LIBRARYPATH}"

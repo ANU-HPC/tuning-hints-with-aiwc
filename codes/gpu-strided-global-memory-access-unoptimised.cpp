@@ -132,6 +132,7 @@ int main(int argc, char** argv){
     except(sbd_err == CL_SUCCESS, "can't get platform counts");
     sbd_platforms = new cl_platform_id[num_platforms];
     sbd_err = clGetPlatformIDs(num_platforms, sbd_platforms, NULL);
+    std::cout << sbd_platforms[1] << "";
     except(sbd_err == CL_SUCCESS, "can't get platform info");
     except(num_platforms, "no OpenCL platforms found");
     except(platform_id >= 0 && platform_id < num_platforms, "invalid platform selection");
@@ -141,10 +142,16 @@ int main(int argc, char** argv){
     except(num_devices, "no OpenCL devices found");
     sbd_devices = new cl_device_id[num_devices];
     sbd_err = clGetDeviceIDs(sbd_platforms[platform_id], CL_DEVICE_TYPE_ALL, num_devices, sbd_devices, NULL);
+    std::cout << sbd_devices[1] << "" << std::endl;
+
     except(sbd_err == CL_SUCCESS, "can't get device info");
     except(device_id >= 0 && device_id < num_devices, "invalid device selection");
 
     sbd_context = clCreateContext(0, 1, &sbd_devices[device_id], NULL, NULL, &sbd_err);
+    if (!(sbd_err == CL_SUCCESS)) {
+	    std::cout << sbd_err << " is the error code at context creation";
+    }
+    
     except(sbd_err == CL_SUCCESS, "can't create context");
     sbd_queue = clCreateCommandQueue(sbd_context, sbd_devices[device_id], 0, &sbd_err);
     except(sbd_err == CL_SUCCESS, "can't create command queue");

@@ -11,7 +11,7 @@
             "targetArchitecture": "x64",
             "program": "/home/adi/tuning-hints-with-aiwc/codes/gpu-stride",
             "miDebuggerServerAddress": ":9091",
-            "args": ["/home/adi/tuning-hints-with-aiwc/codes/gpu-strided-global-memory-access-unoptimised.cl", "small", "0", "0", "runtime"],
+            "args": ["/home/adi/tuning-hints-with-aiwc/codes/gpu-strided-global-memory-access-unoptimised.cl", "small", "1", "0", "runtime"],
             "stopAtEntry": true,
             "cwd": "/home/adi/tuning-hints-with-aiwc", //"${workspaceFolder}/../tuning-hints-with-aiwc",
             "environment": [],
