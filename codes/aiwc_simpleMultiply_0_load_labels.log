@@ -82,3 +82,14 @@ arrayidx7,16777216
 label,count
 arrayidx,16777216
 arrayidx7,16777216
+label,count
+a.addr,512000
+globalCol,518400
+arrayidx,512000
+k,2054400
+N.addr,1548800
+acc,518400
+c.addr,6400
+arrayidx7,512000
+globalRow,518400
+b.addr,512000

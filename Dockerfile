@@ -58,12 +58,12 @@ RUN git clone https://github.com/BeauJoh/opencl_device_query.git /opencl_device_
 ENV LSB /libscibench
 ENV LSB_SRC /libscibench-source
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    clang-3.9 \
+    clang-5.0 \
     g++ \
     gcc \ 
-    libclang-3.9-dev \
-    llvm-3.9 \
-    llvm-3.9-dev
+    libclang-5.0-dev \
+    llvm-5.0 \
+    llvm-5.0-dev
 RUN git clone https://github.com/spcl/liblsb.git $LSB_SRC
 WORKDIR $LSB_SRC
 RUN ./configure --prefix=$LSB
@@ -82,12 +82,12 @@ RUN make install
 ENV OCLGRIND_SRC /oclgrind-source
 ENV OCLGRIND /oclgrind
 ENV OCLGRIND_BIN /oclgrind/bin/oclgrind
-RUN git clone https://github.com/BeauJoh/Oclgrind.git $OCLGRIND_SRC
+RUN git clone https://github.com/ANU-HPC/Oclgrind.git $OCLGRIND_SRC
 RUN mkdir $OCLGRIND_SRC/build
 WORKDIR $OCLGRIND_SRC/build
-ENV CC clang-3.9
-ENV CXX clang++-3.9
-RUN cmake $OCLGRIND_SRC -DUSE_LEVELDB=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_DIR=/usr/lib/llvm3.9/lib/cmake -DCLANG_ROOT=/usr/lib/clang/3.9.1 -DCMAKE_INSTALL_PREFIX=$OCLGRIND
+ENV CC clang-5.0
+ENV CXX clang++-5.0
+RUN cmake $OCLGRIND_SRC -DUSE_LEVELDB=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_DIR=/usr/lib/llvm5.0/lib/cmake -DCLANG_ROOT=/usr/lib/clang5.0 -DCMAKE_INSTALL_PREFIX=$OCLGRIND
 RUN make install
 
 # Install R and model dependencies
@@ -198,4 +198,3 @@ RUN echo "export PATH=$PATH:$HOME/.cargo/bin" >> ~/.bashrc
 #CMD ["beakerx","--allow-root"]
 
 CMD ["/bin/bash"]
-

@@ -55,3 +55,13 @@ label,count
 arrayidx12,65536
 label,count
 arrayidx12,65536
+label,count
+globalRow,6400
+globalCol,6400
+a.addr,6400
+k,518400
+arrayidx12,6400
+acc,518400
+b.addr,6400
+c.addr,6400
+N.addr,6400
