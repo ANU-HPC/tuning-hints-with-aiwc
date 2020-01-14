@@ -1,0 +1,92 @@
+\begin{thebibliography}{10}
+
+\bibitem{opendwarfs2017base}
+{OpenDwarfs} (base version).
+\newblock
+  \url{https://github.com/vtsynergy/OpenDwarfs/commit/31c099aff5343e93ba9e8c3cd42bee5ec536aa93},
+  Feb 2017.
+
+\bibitem{inteloptimisation}
+Intel Corporation.
+\newblock Intel® 64 and ia-32 architectures optimization reference manual.
+\newblock 2016.
+
+\bibitem{cudaoptimisation}
+NVIDIA Corporation.
+\newblock Cuda c best practices guide.
+\newblock 2019.
+
+\bibitem{cudamanual}
+NVIDIA Corporation.
+\newblock Cuda c programming guide.
+\newblock 2019.
+
+\bibitem{ganesan2008performance}
+Karthik Ganesan, Lizy John, Valentina Salapura, and James Sexton.
+\newblock A performance counter based workload characterization on {Blue
+  Gene/P}.
+\newblock In {\em International Conference on Parallel Processing ({ICPP})},
+  pages 330--337. IEEE, 2008.
+
+\bibitem{hennessycomparch}
+John~L. Hennessy and David~A. Patterson.
+\newblock {\em Computer Architecture - {A} Quantitative Approach, 5th Edition}.
+\newblock Morgan Kaufmann, 2012.
+
+\bibitem{hoste2007microarchitecture}
+Kenneth Hoste and Lieven Eeckhout.
+\newblock Microarchitecture-independent workload characterization.
+\newblock {\em IEEE Micro}, 27(3), 2007.
+
+\bibitem{beauaiwc}
+Beau Johnston and Josh Milthorpe.
+\newblock {AIWC:} opencl based architecture independent workload
+  characterisation.
+\newblock {\em CoRR}, abs/1805.04207, 2018.
+
+\bibitem{extendedopendwarfs}
+Beau Johnston and Josh Milthorpe.
+\newblock Dwarfs on accelerators: Enhancing opencl benchmarking for
+  heterogeneous computing architectures.
+\newblock In {\em The 47th International Conference on Parallel Processing,
+  {ICPP} 2018, Workshop Proceedings, Eugene, OR, USA, August 13-16, 2018},
+  pages 4:1--4:10. {ACM}, 2018.
+
+\bibitem{beau_johnston_2017_1134175}
+Beau Johnston, James Price, Moritz Pflanzer, Petros Kalos, Tom Deakin, Nido
+  Media, and Daniel Saier.
+\newblock {BeauJoh/Oclgrind: Adding AIWC -- An Architecture Independent
+  Workload Characterisation Plugin}.
+\newblock https://doi.org/10.5281/zenodo.1134175, December 2017.
+
+\bibitem{khronosopenclworkinggroup2011opencl}
+{Khronos OpenCL Working Group}.
+\newblock {\em The OpenCL Specification, Version 1.1}, 2011.
+
+\bibitem{kim2011cumapz}
+Yooseong Kim and Aviral Shrivastava.
+\newblock Cumapz: a tool to analyze memory access patterns in {CUDA}.
+\newblock In Leon Stok, Nikil~D. Dutt, and Soha Hassoun, editors, {\em
+  Proceedings of the 48th Design Automation Conference, {DAC} 2011, San Diego,
+  California, USA, June 5-10, 2011}, pages 128--133. {ACM}, 2011.
+
+\bibitem{luk2005pin}
+Chi-Keung Luk, Robert Cohn, Robert Muth, Harish Patil, Artur Klauser, Geoff
+  Lowney, Steven Wallace, Vijay~Janapa Reddi, and Kim Hazelwood.
+\newblock Pin: building customized program analysis tools with dynamic
+  instrumentation.
+\newblock In {\em {ACM SIGPLAN} notices}, volume~40, pages 190--200. ACM, 2005.
+
+\bibitem{shao2013isa}
+Yakun~Sophia Shao and David Brooks.
+\newblock Isa-independent workload characterization and its implications for
+  specialized architectures.
+\newblock In {\em IEEE International Symposium on Performance Analysis of
+  Systems and Software {(ISPASS)}}, pages 245--255. IEEE, 2013.
+
+\bibitem{spafford2010maestro}
+Kyle Spafford, Jeremy Meredith, and Jeffrey Vetter.
+\newblock Maestro: data orchestration and tuning for {OpenCL} devices.
+\newblock {\em Euro-Par 2010-Parallel Processing}, pages 275--286, 2010.
+
+\end{thebibliography}

@@ -1,0 +1,115 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{khronosopenclworkinggroup2011opencl}
+\citation{spafford2010maestro}
+\citation{hennessycomparch}
+\@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\citation{beauaiwc}
+\citation{cudaoptimisation}
+\citation{cudamanual}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Motivating Example}{2}{section.2}\protected@file@percent }
+\newlabel{motivating example}{{2}{2}{Motivating Example}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{Simple unoptimised matrix multiplication}{2}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{Using Shared Memory to Coalesce Global Memory Access to Matrix A}{2}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{Using Shared Memory to store Tiles of Matrix B}{2}{section*.6}\protected@file@percent }
+\citation{cudaoptimisation}
+\citation{cudaoptimisation}
+\citation{cudaoptimisation}
+\citation{cudaoptimisation}
+\citation{hoste2007microarchitecture}
+\citation{hoste2007microarchitecture,ganesan2008performance}
+\citation{beauaiwc}
+\citation{shao2013isa}
+\@writefile{toc}{\contentsline {subsection}{Optimising handling of shared memory}{3}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{Alignment of Memory Allocation}{3}{section*.8}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces All threads access memory aligned to nearest cache line in parallel \citep  {cudaoptimisation}\relax }}{3}{figure.caption.9}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig: Simple memory alignment}{{1}{3}{All threads access memory aligned to nearest cache line in parallel \cite {cudaoptimisation}\relax }{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Unaligned sequential memory addresses fit in two cache lines \citep  {cudaoptimisation}\relax }}{3}{figure.caption.10}\protected@file@percent }
+\newlabel{fig: Simple memory misalignment}{{2}{3}{Unaligned sequential memory addresses fit in two cache lines \cite {cudaoptimisation}\relax }{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Related Work}{3}{section.3}\protected@file@percent }
+\newlabel{related work}{{3}{3}{Related Work}{section.3}{}}
+\citation{hoste2007microarchitecture}
+\citation{shao2013isa}
+\citation{kim2011cumapz}
+\citation{hoste2007microarchitecture}
+\citation{inteloptimisation}
+\citation{luk2005pin}
+\citation{kim2011cumapz}
+\@writefile{toc}{\contentsline {subsection}{Advancements in Memory Access Pattern Characterisation}{4}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{MICA}{4}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{CuMAPz}{4}{section*.13}\protected@file@percent }
+\citation{beau_johnston_2017_1134175}
+\citation{beauaiwc}
+\citation{beauaiwc}
+\citation{cudamanual}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Methodology}{5}{section.4}\protected@file@percent }
+\newlabel{method}{{4}{5}{Methodology}{section.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Results}{5}{section.5}\protected@file@percent }
+\newlabel{results}{{5}{5}{Results}{section.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{5}{section.6}\protected@file@percent }
+\newlabel{discussion}{{6}{5}{Discussion}{section.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces NVIDIA Tesla P100 Runtime performance of section \ref  {motivating example} codes averaged over 100 runs\relax }}{6}{figure.caption.14}\protected@file@percent }
+\newlabel{fig: matmul runtime}{{3}{6}{NVIDIA Tesla P100 Runtime performance of section \ref {motivating example} codes averaged over 100 runs\relax }{figure.caption.14}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Selection of AIWC\citep  {beauaiwc} metrics for 256 $\times $ 256 matrix multiplication\relax }}{6}{table.caption.15}\protected@file@percent }
+\newlabel{matmul aiwc table}{{1}{6}{Selection of AIWC\cite {beauaiwc} metrics for 256 $\times $ 256 matrix multiplication\relax }{table.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{A Parallel Spatial Locality Metric}{6}{section*.16}\protected@file@percent }
+\citation{opendwarfs2017base,extendedopendwarfs}
+\citation{opendwarfs2017base}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Calculated parallel spatial locality metric for matrix multiply kernels for 256 $\times $ 256 matrix multiplication\relax }}{7}{figure.caption.17}\protected@file@percent }
+\newlabel{fig: matmul parallel spatial locality}{{4}{7}{Calculated parallel spatial locality metric for matrix multiply kernels for 256 $\times $ 256 matrix multiplication\relax }{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Results}{7}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{N-body methods: GEM}{7}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{Dense Linear Algebra: LUD}{7}{section*.19}\protected@file@percent }
+\bibstyle{plain}
+\bibdata{bib/bibliography.bib}
+\bibcite{opendwarfs2017base}{{1}{}{{}}{{}}}
+\bibcite{inteloptimisation}{{2}{}{{}}{{}}}
+\bibcite{cudaoptimisation}{{3}{}{{}}{{}}}
+\bibcite{cudamanual}{{4}{}{{}}{{}}}
+\bibcite{ganesan2008performance}{{5}{}{{}}{{}}}
+\bibcite{hennessycomparch}{{6}{}{{}}{{}}}
+\bibcite{hoste2007microarchitecture}{{7}{}{{}}{{}}}
+\bibcite{beauaiwc}{{8}{}{{}}{{}}}
+\bibcite{extendedopendwarfs}{{9}{}{{}}{{}}}
+\bibcite{beau_johnston_2017_1134175}{{10}{}{{}}{{}}}
+\bibcite{khronosopenclworkinggroup2011opencl}{{11}{}{{}}{{}}}
+\bibcite{kim2011cumapz}{{12}{}{{}}{{}}}
+\bibcite{luk2005pin}{{13}{}{{}}{{}}}
+\bibcite{shao2013isa}{{14}{}{{}}{{}}}
+\bibcite{spafford2010maestro}{{15}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{Structured Grids: SRAD}{8}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{Graph Traversal: BFS}{8}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusions and Future Work}{8}{section.8}\protected@file@percent }
+\newlabel{future work}{{8}{8}{Conclusions and Future Work}{section.8}{}}
+\@writefile{toc}{\contentsline {section}{References}{8}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}\texttt  {simpleMultiply} kernel}{8}{appendix.A}\protected@file@percent }
+\newlabel{simpleMultiply}{{A}{8}{\texttt {simpleMultiply} kernel}{appendix.A}{}}
+\newlabel{tocindent-1}{0pt}
+\newlabel{tocindent0}{0pt}
+\newlabel{tocindent1}{7.61023pt}
+\newlabel{tocindent2}{10.34999pt}
+\newlabel{tocindent3}{0pt}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers
+\@writefile{toc}{\contentsline {section}{\numberline {B}\texttt  {coalescedAMultiply} kernel}{9}{appendix.B}\protected@file@percent }
+\newlabel{coalescedAMultiply}{{B}{9}{\texttt {coalescedAMultiply} kernel}{appendix.B}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}\texttt  {coalescedAB} kernel}{9}{appendix.C}\protected@file@percent }
+\newlabel{coalescedABMultiply}{{C}{9}{\texttt {coalescedAB} kernel}{appendix.C}{}}
+\newlabel{TotPages}{{9}{9}{}{page.9}{}}
