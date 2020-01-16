@@ -56,6 +56,28 @@
 	numbers=left
 }
 
+% tables (Josh) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{booktabs}
+\usepackage{relsize}
+\usepackage{multirow}
+\usepackage{array}
+\renewcommand{\arraystretch}{1.2}  % stretch space between table rows a bit
+
+\newcommand{\otoprule}{\midrule[\heavyrulewidth]}
+\definecolor{tableheadcolor}{rgb}{0.8,0.8,1.0}
+\definecolor{tablealtcolor}{rgb}{0.9,0.9,0.95}
+
+% bold table rows (use \rowstyle{\bffamily} on each bold row)
+\newcolumntype{B}{>{\global\let\currentrowstyle\relax}}
+\newcolumntype{^}{>{\currentrowstyle}}
+\newcommand{\rowstyle}[1]{\gdef\currentrowstyle{#1}#1\ignorespaces}
+\newcolumntype{C}{>{\bfseries}}
+
+% sans-serif tables
+\let\oldtabular\tabular
+\let\endoldtabular\endtabular
+\renewenvironment{tabular}{\sffamily\oldtabular}{\endoldtabular}
+
 \begin{document}
 
 	\begin{abstract}
@@ -281,7 +303,7 @@
 		Global MAE                    & 17.02  & 13.18      & 9.78        & 9.78         & 9.78       \\ %\hline
 		LMAE \#bits=3                 & 16.02  & 12.18      & 8.78        & 8.78         & 8.78       \\ %\hline
 		LMAE \#bits=10                & 9.02   & 5.18       & 1.78        & 1.78         & 1.78       \\ %\hline
-		Relative Local Memory Usage   & 0      & 49.9083    & 94.28       & 94.28        & 94.28      \\ \bottomrule
+		Relative Local Memory Usage   & 0      & 49.91    & 94.28       & 94.28        & 94.28      \\ \bottomrule
 	\end{tabular}
 	\caption{Selection of AIWC\cite{beauaiwc} metrics for 256 $\times$ 256 matrix multiplication}
 	\label{matmul aiwc table}
