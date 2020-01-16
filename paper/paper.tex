@@ -56,6 +56,28 @@
 	numbers=left
 }
 
+% tables (Josh) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{booktabs}
+\usepackage{relsize}
+\usepackage{multirow}
+\usepackage{array}
+\renewcommand{\arraystretch}{1.2}  % stretch space between table rows a bit
+
+\newcommand{\otoprule}{\midrule[\heavyrulewidth]}
+\definecolor{tableheadcolor}{rgb}{0.8,0.8,1.0}
+\definecolor{tablealtcolor}{rgb}{0.9,0.9,0.95}
+
+% bold table rows (use \rowstyle{\bffamily} on each bold row)
+\newcolumntype{B}{>{\global\let\currentrowstyle\relax}}
+\newcolumntype{^}{>{\currentrowstyle}}
+\newcommand{\rowstyle}[1]{\gdef\currentrowstyle{#1}#1\ignorespaces}
+\newcolumntype{C}{>{\bfseries}}
+
+% sans-serif tables
+\let\oldtabular\tabular
+\let\endoldtabular\endtabular
+\renewenvironment{tabular}{\sffamily\oldtabular}{\endoldtabular}
+
 \begin{document}
 
 	\begin{abstract}
