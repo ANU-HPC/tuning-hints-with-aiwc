@@ -81,6 +81,18 @@
 \begin{document}
 
 	\begin{abstract}
+	proposed new abstract: 
+		
+	Context: AIWC gathers features of OpenCL programs which can be used to understand and predict program performance
+	
+	Problem: metrics aren't easily interpreted and don't reflect important memory access patterns that affect efficiency across all architectures
+	
+	Solution: new metrics
+	
+	Results: differences in metrics reflect optimizations for matrix multiply; improved performance prediction by x\% for Extended OpenDwarfs benchmarks
+	
+	Significance: as per last sentence\\
+		
 	This paper addresses the challenge of profiling a code base to help programmers effectively optimise their codes for high performance.
 	Current methods of analysing program behaviour have largely relied on performance counters on various architectures to provide architecture dependent metrics of code behaviour. 
 	However, if workload characteristics are tied to architectural features specific to a particular system, these analysis frameworks may not generalise to alternative or future systems.
@@ -93,13 +105,17 @@
 	
 	\section{Introduction}
 	
-	High-performance computing (HPC) systems are increasingly incorporating a multitude of heterogeneous compute elements. Single nodes on supercomputers now comprise of traditional CPUs and multiple accelerators such as GPUs, Field Programmable Gate Arrays (FPGAs), and many-integrated-core devices (MICs). The development of high bandwidth interconnects between compute devices supports tight integration between multiple devices of different types on the same compute node.
+	High-performance computing (HPC) systems are increasingly heterogeneous.
+	A single node on a modern supercomputers may combine a traditional CPUs with one or more accelerators such as GPUs, Field Programmable Gate Arrays (FPGAs), or many integrated core devices (MICs).
+	The development of high bandwidth interconnects between compute devices supports tight integration between multiple devices of different types on the same compute node.
 	
 	The OpenCL programming language is designed to support modern HPC software engineers in writing code that executes on multiple hardware targets. 
 	%It is possible for an engineer to write highly thread-divergent logical analysis code aimed at traditional CPUs; parallelisable data crunching kernels aimed at GPUs; and code to satisfy specialised computational requirements aimed at FPGAs -- all in a single code base using OpenCL. 
 	The language provides support for individual \emph{kernels}, portions of parallelisable codes that make up a HPC code base, to be executed independently on diverse hardware targets such as traditional CPUs, GPUs and FPGAs \cite{khronosopenclworkinggroup2011opencl}. This gives HPC software developers greater flexibility by allowing codes aimed at a range of hardware targets to be written in a single programming language environment.
 	
-	Application codes differ in resource requirements, control structure and available parallelism. Similarly, compute devices differ in number and capabilities of execution units, processing model, and available resources. These heterogeneous computing environments present opportunities for software engineers and HPC integrators to design highly optimised systems with multiple kernels executing on hardware targets best suited for the diverse computational tasks performed by these kernels \cite{spafford2010maestro}.	However this opportunity raises the twin challenges of deciding on the right hardware target for complex kernels; and optimising codes to run on these diverse architectures. Our work is directed at helping developers tackle the latter of these two problems.
+	Application codes differ in resource requirements, control structure and available parallelism. Similarly, compute devices differ in number and capabilities of execution units, processing model, and available resources. These heterogeneous computing environments present opportunities for software engineers and HPC integrators to design highly optimised systems with multiple kernels executing on hardware targets best suited for the diverse computational tasks performed by these kernels \cite{spafford2010maestro}.
+	However this opportunity raises the twin challenges of determining the best hardware target for complex kernels and optimising codes to run on these diverse architectures.
+	Our work is directed at helping developers tackle the latter of these two problems.
 	
 	Modern computer architectures have suffered from the exponential growth in computational speeds being unmet by proportional increases in memory speeds\cite{hennessycomparch}. Memory accesses pose larger bottlenecks to performance as applications' demand for main memory scales with the arithmetic capability of computer systems. To mitigate this latency, modern CPU designs have employed a wide range of cache technologies to reduce main memory accesses using the principle of \emph{spatial locality}: the idea that programs repeatedly access memory addresses in close locality. On the other hand, GPUs rely on hardware multithreading to hide memory latency, and their architectures favour ALU capability over sophisticated logic to manage a cache hierarchy and out-of-order execution. As a result, the performance of kernels on CPUs and GPUs alike is strongly dependent on memory access patterns intrinsic to the code. % We discuss the memory model design and the manufacturer recommended optimisations for NVIDIA GPUs in later sections..
 	
