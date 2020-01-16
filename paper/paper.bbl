@@ -70,6 +70,13 @@ Yooseong Kim and Aviral Shrivastava.
   Proceedings of the 48th Design Automation Conference, {DAC} 2011, San Diego,
   California, USA, June 5-10, 2011}, pages 128--133. {ACM}, 2011.
 
+\bibitem{krommydas2016opendwarfs}
+Konstantinos Krommydas, Wu-chun Feng, Christos~D Antonopoulos, and Nikolaos
+  Bellas.
+\newblock Opendwarfs: Characterization of dwarf-based benchmarks on fixed and
+  reconfigurable architectures.
+\newblock {\em Journal of Signal Processing Systems}, 85(3):373--392, 2016.
+
 \bibitem{luk2005pin}
 Chi-Keung Luk, Robert Cohn, Robert Muth, Harish Patil, Artur Klauser, Geoff
   Lowney, Steven Wallace, Vijay~Janapa Reddi, and Kim Hazelwood.

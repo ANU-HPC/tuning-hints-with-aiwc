@@ -423,21 +423,169 @@
 	
 	We present the results of running the AIWC tool on the Extended OpenDwarfs benchmark suite \cite{opendwarfs2017base,extendedopendwarfs}.
 	
+	% As all kernels access memory on word (32-bit) boundaries, there is no effect in dropping upto two bits in the PSL metric...
+	\begin{figure*}[h!]
+		\centering
+		\begin{tikzpicture}
+		\begin{axis}[symbolic x coords={0,1,2,3,4,5,6,7,8,9,10},
+		width=0.7\textwidth,
+		height=0.5\textwidth,
+		xtick={0,1,2,3,4,5,6,7,8,9,10},
+		xticklabel style={text height=2ex},
+		ymin=0,
+		ylabel={$n$-bits dropped Parallel Spatial Locality}, xlabel={\# of bits skipped},
+		ylabel style={at={(axis description cs:0.05,.5)},anchor=south},
+		legend entries={\texttt{GEM}, \texttt{NW*}, \texttt{SRAD Kernel 1},\texttt{SRAD Kernel 2},
+			\texttt{CSR}, \texttt{BFS*}, \texttt{LUD Diagonal}, \texttt{LUD Internal}, \texttt{LUD Perimeter}},
+		legend style={at={(0.55,0.75)},anchor=west}
+		]
+		
+		
+		\addplot[mark=*] coordinates {
+			(0, 0.1139)
+			(1, 0.1139)
+			(2, 0.1139)
+			(3, 0.1139)
+			(4, 0.0989)
+			(5, 0.08402)
+			(6, 0.06914)
+			(7, 0.05431)
+			(8, 0.03938)
+			(9, 0.02442)
+			(10, 0.0124)
+		};
+		
+		
+		\addplot[mark=star] coordinates {
+			(0, 2.175)
+			(1, 2.175)
+			(2, 2.175)
+			(3, 2.175)
+			(4, 2.175)
+			(5, 2.175)
+			(6, 2.175)
+			(7, 2.175)
+			(8, 2.175)
+			(9, 2.175)
+			(10, 2.175)
+		};
+		
+		\addplot[mark=*] coordinates {
+			(0, 7.232)
+			(1, 7.232)
+			(2, 7.232)
+			(3, 7.232)
+			(4, 6.351)
+			(5, 5.461)
+			(6, 4.570)
+			(7, 3.678)
+			(8, 3.648)
+			(9, 3.633)
+			(10, 3.625)
+		};
+		
+		
+		\addplot[mark=star] coordinates {
+			(0, 7.098)
+			(1, 7.098)
+			(2, 7.098)
+			(3, 7.098)
+			(4, 6.223)
+			(5, 5.344)
+			(6, 4.464)
+			(7, 3.583)
+			(8, 3.567)
+			(9, 3.559)
+			(10, 3.556)
+		};
+		
+		\addplot[mark=triangle*] coordinates {
+			(0, 9.605)
+			(1, 9.605)
+			(2, 9.605)
+			(3, 9.605)
+			(4, 9.478)
+			(5, 9.293)
+			(6, 9.049)
+			(7, 8.761)
+			(8, 8.447)
+			(9, 8.12)
+			(10,7.233)
+		};
+		
+		\addplot[mark=square] coordinates {
+			(0,4.406)
+			(1,4.406)
+			(2,4.406)
+			(3,4.406)
+			(4,4.361)
+			(5,4.273)
+			(6,4.135)
+			(7,3.941)
+			(8,3.689)
+			(9,3.382)
+			(10,3.029)
+		};
+		
+		\addplot[mark=o] coordinates {
+			(0,1.548)
+			(1,1.548)
+			(2,1.548)
+			(3,1.548)
+			(4,1.305)
+			(5,1.092)
+			(6,0.9385)
+			(7,0.8796)
+			(8,0.8796)
+			(9,0.8796)
+			(10,0.8796)
+		};
+		\end{axis}
+		\end{tikzpicture}
+		\caption{Parallel spatial locality metric for selected OpenDwarfs benchmark kernels}
+		\label{fig: opendwarfs parallel spatial locality}
+	\end{figure*}
 	\subsection{N-body methods: GEM}
 	
-	\subsection{Dense Linear Algebra: LUD}
+	% TODO
 	
-	Lower-upper decomposition (LUD) in OpenDwarfs is a program to decompose an input square matrix as the product of one lower and one upper diagonal matrix. LUD is a Memory access patterns in a dense linear algebra workload such as LUD are typically highly regular and deterministic for each OpenCL work item, based on the the matrix dimension and offset parameters.
+	\subsection{Dense Linear Algebra: Lower-upper decomposition (LUD)}
 	
-	The OpenDwarfs implementation \cite{opendwarfs2017base} splits the LUD computation into three kernels, ...  %TODO: Divergence in the kernels. Make a diagram/code simplification for LUD.
+	LUD in OpenDwarfs is a program to decompose an input $N\times N$ matrix as the product of one lower and one upper diagonal matrix. LUD is a Memory access patterns in a dense linear algebra workload such as LUD are typically highly regular and deterministic for each OpenCL work item, based on the the matrix dimension and offset parameters. The OpenDwarfs implementation of LUD \cite{opendwarfs2017base} splits the LUD computation into three kernels: LUD perimeter and diagonal kernels spawn work-items in a single work dimension while LUD internal performs work in both dimensions of the input matrix.
 	
-	\subsection{Structured Grids: SRAD}
+	LUD perimeter and diagonal partially benefit from memory access coalescing, for the lines of code where all the work-items access contiguous memory along a row of the input matrix. However, when threads parallelly access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. This is reflected in the slow drop in parallel spatial locality for LUD perimeter and diagonal kernels.
 	
-	Speckle Reducing Anisotropic Diffusion (SRAD) attempts to remove locally correlated noise from images by following a repeated, structured grid update computation pattern. Conditional statements in the code cause thread divergence, potentially within a work-group, to handle boundary conditions. These boundaries constitute a small portion of the executed work-items, especially on larger data-sets and so the .
+	LUD internal %TODO: 2Dimensional work -- better parallelism
+	
+	%The use of creates imbalanced workload and divergent control flow within work-items in each kernel iteration. While the presence of conditional statements cause some thread divergence in the LUD diagonal kernel, the use of barriers following conditional statements synchronises the threads. LUD diagonal and perimeter kernels , while LUD.
+	
+	...  %TODO: Divergence in the kernels. Make a diagram/code simplification for LUD.
+	
+	\subsection{Dynamic Programming: Needleman-Wunsch (NW)}
+	
+	Needleman-Wunsch is a dynamic programming algorithm used to perform protein sequence alignment by identifying the similarity level between two strings of Amino acids. Elements in a matrix are computed, with each element dependent on its west, north and north-west neighbours. This dependency enforces a wavefront computation pattern, travelling along the main diagonal of the matrix. Each iteration of the kernels computes over an antidiagonal of the matrix, starting at its top left corner and finishing at its bottom right corner.
+	
+	In particular, the wavefront pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any dropoff in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs this will translate to poor utilisation of both memory access coalescing and caching. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests. 
+	
+	\subsection{Structured Grids: Speckle Reducing Anisotropic Diffusion (SRAD)}
+	
+	SRAD removes locally correlated noise from images by following a repeated grid update computation pattern. Conditional statements in the code cause thread divergence, potentially within a work-group, to handle boundary conditions. These boundaries constitute a small portion of the executed work-items, especially on larger data-sets and so the effective thread divergence is minimal. Thus, memory access patterns in SRAD are statically determined and relatively localised. The observed rapid drop-off in parallel spatial locality of the SRAD kernels (figure \ref{fig: opendwarfs parallel spatial locality}) is due to the highly localised nature of parallel memory accesses. At each point in the kernels' memory access profile, each work-item $(i,j)$ in an OpenCL work-group accesses the $(i,j)^{th}$ elements of various matrices. The sequential memory access pattern is non-linear since different matrices are accessed consecutively by the kernel, prohibiting ideal caching. However, memory requests made parallelly are highly localised, allowing memory access coalescing on GPUs, greatly reducing the number of memory requests made on each line of the kernel code on GPUs. Thus while cache hit rates are typically low on this benchmark, particularly on GPUs \cite{krommydas2016opendwarfs}, GPUs can hide the latency of global memory accesses through coalescing.
 	
 	\subsection{Graph Traversal: BFS}
 	
-	Graph traversal algorithms require pointer chasing operations to traverse nodes of a graph to perform calculations. The Breadth First Search 
+	Graph traversal algorithms require pointer chasing operations to traverse nodes of a graph and perform calculations. The Breadth First Search implemented in OpenDwarfs calls OpenCL kernels to traverse nodes immediately connected to the list of nodes at each depth starting from the root node. BFS is characterised by an imbalanced workload per kernel launch depending on the degree of the nodes being operated on -- with only a proportion of launched nodes performing meaningful work. As such the AIWC features collected for each kernel invocation vary significantly. The parallel spatial locality metric collects the entropy of memory accesses at each time step, and workload imbalances are dealt with by averaging entropy scores across all the time steps in the execution of an OpenCL work-group. 
+	
+	The memory access patterns in BFS are irregular. Work-items fetch discontinuous memory locations attributed to any particular node in the graph, depending on the connectivity of the node they operate on. The program structure involves multiple levels of pointer-chasing and thus the precise memory address accessed are runtime dependent. This leads to poor parallel spatial locality. Thus, we see a slow dropoff in parallel spatial locality for BFS.
+	
+	\subsection{Sparse Linear Algebra: CSR}
+	
+	Compressed Sparse Row Matrix-Vector Multiplication (CSR) computes the sum of each of a matrix's row's elements after it is multiplied by a given vector. The matrix is stored in a compressed row storage sparse matrix format, which is very efficient for storage when the number of zero elements is far greater than the number of non-zero elements. Only non-zero elements of each row of a matrix are stored in $Ax$, along with separate arrays $Aj,\ Ap$ indicating the position of each non-zero element in the matrix. Figure \ref{?} depicts the sparse matrix format of storage for a $4\times4$ matrix.
+	
+	In this particular implementation, a single OpenCL work-item is assigned to compute over each row of the input sparse matrix. Similar to BFS, memory access patterns are runtime-dependent, since the locations of matrix data read by each thread are dependent on the number and position of non-zero values in the sparse-matrix, decided by the values in $Aj$ and $Ap$. This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the very gradual decline in parallel spatial locality as the number of bits dropped is increased.
+	
+	\subsection{Finite State Machine: Temporal Data Mining (TDM)}
+	
+	%TODO
 	
 	\section{Conclusions and Future Work} \label{future work}
 	
