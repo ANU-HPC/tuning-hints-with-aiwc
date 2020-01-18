@@ -79,10 +79,10 @@
 \renewenvironment{tabular}{\sffamily\oldtabular}{\endoldtabular}
 
 \begin{document}
-
-	\begin{abstract}
+	
+	\begin{comment}
 	proposed new abstract: 
-		
+	
 	Context: AIWC gathers features of OpenCL programs which can be used to understand and predict program performance
 	
 	Problem: metrics aren't easily interpreted and don't reflect important memory access patterns that affect efficiency across all architectures
@@ -92,19 +92,26 @@
 	Results: differences in metrics reflect optimizations for matrix multiply; improved performance prediction by x\% for Extended OpenDwarfs benchmarks
 	
 	Significance: as per last sentence\\
-		
+	\end{comment}
+
+	\begin{abstract}
 	
-	This paper addresses the challenge of profiling a code base to help programmers effectively optimise their codes for high performance.
-	The Architecture Independent Workload Characterisation Tool (AIWC) gathers features of OpenCL programs used to understand and predict program performance. 
-	
-	Current methods of analysing program behaviour have largely relied on performance counters on various architectures to provide architecture dependent metrics of code behaviour. 
-	However, if workload characteristics are tied to architectural features specific to a particular system, these analysis frameworks may not generalise to alternative or future systems.
-	Considering the trend towards heterogeneous computing, we work towards a framework to guide developers in optimising codes for any given hardware target using the architecture independent workload characterisation (AIWC) tool -- specifically in profiling memory access patterns of code. 
-	
-	Metrics must be easily interpreted and conceptually linked to patterns in hardware-specific memory access optimisations.
-	To this end we propose, implement and analyse the addition of two new metrics to AIWC and present a new approach to profile spatial locality intrinsic to parallel codes.
+	%This paper addresses the challenge of profiling a code base to help programmers effectively optimise their codes for high performance.
+	HPC developers are faced with the challenge of optimising OpenCL workloads for high performance on novel architectures.
+	The Architecture Independent Workload Characterisation (AIWC) tool is a plugin for the Oclgrind OpenCL simulator that gathers metrics of OpenCL programs used to understand and predict program performance on an arbitrary given hardware architecture.
+	However, AIWC metrics are not always easily interpreted and do not reflect some important memory access patterns affecting efficiency across architectures.
+	We propose the concept of parallel spatial locality -- the locality of memory accesses by OpenCL work-items (threads) executing simultaneously.
+	We implement the parallel spatial locality metric in the AIWC framework, and analyse gathered results on matrix multiply and the Extended OpenDwarfs OpenCL benchmarks.
+	The differences in the obtained parallel spatial locality metric across implementations of matrix multiply reflect the optimisations performed.
+	The new metric showcases the memory access patterns in the OpenDwarfs benchmarks that affect their performance on various architectures.
+	%Current methods of analysing program behaviour have largely relied on performance counters on various architectures to provide architecture dependent metrics of code behaviour. 
+	%However, if workload characteristics are tied to architectural features specific to a particular system, these analysis frameworks may not generalise to alternative or future systems.
+	%Considering the trend towards heterogeneous computing, we work towards a framework to guide developers in optimising codes for any given hardware target using the architecture independent workload characterisation (AIWC) tool -- specifically in profiling memory access patterns of code. 
+	%Metrics must be easily interpreted and conceptually linked to patterns in hardware-specific memory access optimisations.
+	%To this end we propose, implement and analyse the addition of two new metrics to AIWC and present a new approach to profile spatial locality intrinsic to parallel codes.
 	The improvements suggested to AIWC will help HPC developers better understand memory access patterns of complex codes, a crucial step in guiding optimisation of codes for arbitrary hardware targets.
 	\end{abstract}
+
 	\maketitle	
 	
 	\section{Introduction}
@@ -293,16 +300,16 @@
 			\addplot[mark=triangle*] coordinates {
 				(simple,46901.35)
 				(coalA,8948.96)
-				(coalAB,8894.74)
-				(coalABT,7756.75)
-				(alignABT,6951.7773435)
+				(coalAB,9237.5)
+				(coalABT,5307)
+				(alignABT,5272)
 			};
 			\addplot[mark=square] coordinates {
 				(simple,130601.41)
 				(coalA,28722.51)
 				(coalAB,27169.72)
-				(coalABT,23284.03)
-				(alignABT,21363.90)
+				(coalABT,16179.03)
+				(alignABT,16071.90)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
@@ -457,12 +464,17 @@
 	
 %	With $E_{n,t}$ the n-bits dropped entropy at timestamp $t$.
 
-	The proposed metric is a parallel computing analogue for MICA's data stride metric that measures the distance between consecutive data accesses in a single threaded environment. In parallel programs, to accurately measure spatial locality of accesses, we must consider memory accesses performed by multiple threads in a close temporal scope. The proposed metric calculates the locality of accesses in each time step of the program's execution and steeper drop-offs in $n$-bits dropped parallel spatial locality scores will be observed in programs that access nearby memory addresses within the same timestamp. Such programs will perform better on GPUs, as they will make better use of both global memory access coalescing and shared memory bank structures.
+	The proposed metric is a parallel computing analogue for MICA's data stride metric that measures the distance between consecutive data accesses in a single threaded environment. 
+	In parallel programs, to accurately measure spatial locality of accesses, we must consider memory accesses performed by multiple threads in a close temporal scope. 
+	The proposed metric calculates the locality of accesses in each time step of the program's execution and steeper drop-offs in $n$-bits dropped parallel spatial locality scores will be observed in programs that access nearby memory addresses within the same timestamp.
+	Such programs will perform better on GPUs, as they will make better use of both global memory access coalescing and shared memory bank structures.
+	To a lesser extent, the proposed metric captures performance-critical memory access patterns on CPUs, as pulling a single cacheline from global memory services the threads running on all CPU cores. %TODO: Josh, Beau -- Please check this paragraph.
 	
 	In figure \ref{fig: matmul parallel spatial locality} we see theoretical calculations for the proposed parallel spatial locality metric for each of the matrix multiplication kernels from section \ref{motivating example}. In particular we observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest drop-offs in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses. It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simpleMultiply}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of shared memory, where accesses tend to be localised simply due to the small size of shared on-chip memory typically available on GPUs. Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels. It accurately depicts a steeper drop-off for the more optimised \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels. This is a significant improvement over the state-of-the-art AIWC metrics in characterising how codes localise shared memory accesses to better use the hardware provided.
 	
 	\section{Results}
 	
+	The Extended OpenDwarfs benchmark suite is a set of OpenCL workload classified according to the computation patterns or Dwarfs. First presented in 2006, the Dwarfs categorise 
 	We present the results of running the AIWC tool on the Extended OpenDwarfs benchmark suite \cite{opendwarfs2017base,extendedopendwarfs}.
 	
 	
@@ -591,11 +603,11 @@
 	\subsection{N-body methods: GEM}
 	
 	% TODO
-	The OpenDwarfs benchmark GEM computes the electrostatic potential of a biomolecule by calculating the sum of charges contributed by all
+	The OpenDwarfs benchmark GEM computes the electrostatic potential of a biomolecule by calculating the sum of charges contributed by all atoms in the biomolecule at each specific surface vertex.
 	This is an embarrassingly parallel problem. Each OpenCL work-item operates on a single surface vertex, finding the electrostatic potential generated by looping through every atom in the biomolecule in a global order. 
 	The computation pattern is highly regular and memory accesses are perfectly synchronised. Atom data is accessed consecutively, with all work-items simultaneously accessing each single atom's data.
 	The parallel spatial locality metric reflects this pattern of efficient memory utilisation (single loads from global memory servicing all OpenCL work-items). The recorded parallel spatial locality approaches the theoretical limit of 0 (0.0124 at 10 bits dropped). This indicates that almost all memory accesses made by the OpenCL kernel are perfectly synchronised between OpenCL threads.
-	%TODO: Clarify above sentence: I mean efficient memory fetches (one load from global memory services all threads) -- not reduced usage of memory.
+	
 	\subsection{Dense Linear Algebra: Lower-upper decomposition (LUD)}
 	
 	LUD in OpenDwarfs is a program to decompose an input $N\times N$ matrix as the product of one lower and one upper diagonal matrix. LUD is a Memory access patterns in a dense linear algebra workload such as LUD are typically highly regular and deterministic for each OpenCL work item, based on the the matrix dimension and offset parameters. The OpenDwarfs implementation of LUD \cite{opendwarfs2017base} splits the LUD computation into three kernels: LUD perimeter and diagonal kernels spawn work-items in a single work dimension while LUD internal performs work in both dimensions of the input matrix.
