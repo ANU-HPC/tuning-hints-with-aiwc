@@ -98,12 +98,12 @@
 	
 	%This paper addresses the challenge of profiling a code base to help programmers effectively optimise their codes for high performance.
 	HPC developers are faced with the challenge of optimising OpenCL workloads for high performance on novel architectures.
-	The Architecture Independent Workload Characterisation (AIWC) tool is a plugin for the Oclgrind OpenCL simulator that gathers metrics of OpenCL programs used to understand and predict program performance on an arbitrary given hardware architecture.
+	The Architecture Independent Workload Characterisation (AIWC) tool is a plugin for the Oclgrind OpenCL simulator that gathers metrics of OpenCL programs that can be used to understand and predict program performance on an arbitrary given hardware architecture.
 	However, AIWC metrics are not always easily interpreted and do not reflect some important memory access patterns affecting efficiency across architectures.
-	We propose the concept of parallel spatial locality -- the locality of memory accesses by OpenCL work-items (threads) executing simultaneously.
+	We propose the concept of parallel spatial locality -- the closeness of memory accesses simultaneously issued by OpenCL work-items (threads).
 	We implement the parallel spatial locality metric in the AIWC framework, and analyse gathered results on matrix multiply and the Extended OpenDwarfs OpenCL benchmarks.
 	The differences in the obtained parallel spatial locality metric across implementations of matrix multiply reflect the optimisations performed.
-	The new metric showcases the memory access patterns in the OpenDwarfs benchmarks that affect their performance on various architectures.
+	The new metric can be used to distinguish between the OpenDwarfs benchmarks based on the memory access patters affecting their performance on various architectures.
 	%Current methods of analysing program behaviour have largely relied on performance counters on various architectures to provide architecture dependent metrics of code behaviour. 
 	%However, if workload characteristics are tied to architectural features specific to a particular system, these analysis frameworks may not generalise to alternative or future systems.
 	%Considering the trend towards heterogeneous computing, we work towards a framework to guide developers in optimising codes for any given hardware target using the architecture independent workload characterisation (AIWC) tool -- specifically in profiling memory access patterns of code. 
@@ -122,7 +122,8 @@
 	
 	The OpenCL programming language is designed to support modern HPC software engineers in writing code that executes on multiple hardware targets. 
 	%It is possible for an engineer to write highly thread-divergent logical analysis code aimed at traditional CPUs; parallelisable data crunching kernels aimed at GPUs; and code to satisfy specialised computational requirements aimed at FPGAs -- all in a single code base using OpenCL. 
-	The language provides support for individual \emph{kernels}, portions of parallelisable codes that make up a HPC code base, to be executed independently on diverse hardware targets such as traditional CPUs, GPUs and FPGAs \cite{khronosopenclworkinggroup2011opencl}. This gives HPC software developers greater flexibility by allowing codes aimed at a range of hardware targets to be written in a single programming language environment.
+	%The language provides support for individual \emph{kernels}, portions of parallelisable codes that make up a HPC code base, to be executed independently on diverse hardware targets such as traditional CPUs, GPUs and FPGAs \cite{khronosopenclworkinggroup2011opencl}. 
+	This gives HPC software developers greater flexibility by allowing codes aimed at a range of hardware targets to be written in a single programming language environment.
 	
 	Application codes differ in resource requirements, control structure and available parallelism. Similarly, compute devices differ in number and capabilities of execution units, processing model, and available resources. These heterogeneous computing environments present opportunities for software engineers and HPC integrators to design highly optimised systems with multiple kernels executing on hardware targets best suited for the diverse computational tasks performed by these kernels \cite{spafford2010maestro}.
 	However this opportunity raises the twin challenges of determining the best hardware target for complex kernels and optimising codes to run on these diverse architectures.
@@ -134,9 +135,15 @@
 	
 	
 	%What we did briefly
-	Our aim in this paper is to develop a framework to guide HPC software engineers in hardware dependent code optimisation -- specifically by guiding the improvement of codes' memory access patterns. We provide examples of manufacturer recommended code optimisations to improve memory access patterns on the target architecture, and examine these using AIWC \cite{beauaiwc}, a state of the art architecture-independent code analysis tool for parallel workloads. Our work highlights the benefits and challenges arising from an architecture independent analysis of memory based program characteristics. We suggest the addition of two new metrics to AIWC to better characterise these memory-based optimisations. We measure the presented codes using the new metrics and discuss the metrics' effectiveness in capturing the essence of the optimisations performed. With these improvements, we show that AIWC is better suited to be used by HPC software engineers in guiding optimisation of their codes. 
+	Our aim in this paper is to develop a framework to guide HPC software engineers in hardware dependent code optimisation -- specifically by guiding the improvement of codes' memory access patterns. %TODO FIXME: remove this or reword it. Personally don't think it sounds good
+	We provide examples of manufacturer recommended code optimisations to improve memory access patterns on the target architecture, and examine these using AIWC \cite{beauaiwc}, a state of the art architecture-independent code analysis tool for OpenCL workloads.
+	We suggest the addition of two new metrics to AIWC to better characterise these memory-based optimisations.
+	We measure the presented codes using the new metrics and discuss the metrics' effectiveness in capturing the essence of the optimisations performed.
+	Further, we validate the effectiveness of the added metrics in finding favourable memory access patterns in the Extended OpenDwarfs benchmarks.
+	With these improvements, we show that AIWC is better suited to be used by HPC software engineers in guiding optimisation of their codes. 
 	
-	The structure of this paper is as follows. In section \ref{motivating example}, we use the example of GPU matrix multiplication code to showcase the specific vendor recommended optimisations our work aims to measure. In section \ref{related work} we discuss how AIWC and its precursors profiled memory access patterns in an architecture independent fashion, and relevant architecture dependent approaches to memory access profiling. Then in section \ref{method} we provide a methodology to critically examine AIWC, the current state of the art architecture independent workload characterisation tool. In section \ref{results} we measure the accuracy of AIWC in profiling the impact of performance optimisations to various OpenCL codes. In section \ref{discussion} we suggest new methods to accurately capture code patterns correlating to hardware specific memory optimisations. Finally, in section \ref{future work} we discuss further avenues to extend our work and conclude.
+	The structure of this paper is as follows. In section \ref{motivating example}, we use the example of GPU matrix multiplication code to showcase the specific vendor recommended optimisations our work aims to measure. In section \ref{related work} we discuss how AIWC and its precursors profiled memory access patterns in an architecture independent fashion, and relevant architecture dependent approaches to memory access profiling. Then in section \ref{method} we provide a methodology to critically examine AIWC, the current state of the art architecture independent workload characterisation tool. In section \ref{preliminary results} we measure the accuracy of AIWC in profiling the impact of performance optimisations to various OpenCL codes. In section \ref{discussion} we propose and implement our parallel spatial locality metric into the AIWC framework. In section \ref{results} we present the collected metric for selected OpenDwarfs benchmarks to validate our methodology in this paper. Finally, in section \ref{future work} we discuss further avenues to extend our work and conclude.
+	%TODO: Change the above paragraph as paper structure evolves
 	
 	\section{Motivating Example} \label{motivating example}
 	
@@ -251,7 +258,7 @@
 	
 	In the original AIWC tool \cite{beau_johnston_2017_1134175}, global and local memory address entropy (MAE) were calculated using physical addresses of memory used by the Oclgrind simulator back-end of AIWC. This caused irregularities in entropy calculations across multiple runs of the same simulation. We improved the calculation of memory address entropy by using \textit{virtual addresses} to calculate MAE values using an abstract ideal address space on which all memory accesses by the kernel occur. This allows AIWC to accurately abstract over the hardware and ISA-specific differences in memory layouts across the diverse hardware targets.
 		
-	\section{Results} \label{results}
+	\section{Preliminary Results} \label{preliminary results}
 	
 	\begin{figure*}[h!]
 		\centering
@@ -268,19 +275,19 @@
 			legend style={at={(0.6,0.45)},anchor=west}
 			]
 			
-			\addplot[mark=*] coordinates {
-				(simple,27.79)
-				(coalA,16.36)
-				(coalAB,17.02)
-				(coalABT,16.34)
-				(alignABT,30.21)
+			\addplot coordinates {%[mark=*] coordinates {
+				(simple,31)
+				(coalA,19)
+				(coalAB,20)
+				(coalABT,18)
+				(alignABT,18)
 			};
-			\addplot[mark=star] coordinates {
-				(simple,319.71)
-				(coalA,70.12)
-				(coalAB,73.60)
-				(coalABT,65.27)
-				(alignABT,61.50)
+			\addplot coordinates {%[mark=star] coordinates {
+				(simple,325)
+				(coalA,75)
+				(coalAB,81)
+				(coalABT,55)
+				(alignABT,55)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
@@ -297,19 +304,19 @@
 			legend style={at={(0.6,0.45)},anchor=west}
 			]
 			
-			\addplot[mark=triangle*] coordinates {
-				(simple,46901.35)
-				(coalA,8948.96)
+			\addplot [mark=*, color=brown] coordinates {%[mark=triangle*] coordinates {
+				(simple,46920)
+				(coalA,8783)
 				(coalAB,9237.5)
 				(coalABT,5307)
 				(alignABT,5272)
 			};
-			\addplot[mark=square] coordinates {
-				(simple,130601.41)
-				(coalA,28722.51)
-				(coalAB,27169.72)
-				(coalABT,16179.03)
-				(alignABT,16071.90)
+			\addplot [mark=star] coordinates {%[mark=square] coordinates {
+				(simple,130682.0)
+				(coalA,28602)
+				(coalAB,27939)
+				(coalABT,16179)
+				(alignABT,16071)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
@@ -318,7 +325,8 @@
 		\label{fig: matmul runtime}
 	\end{figure*}
 
-	Figure \ref{fig: matmul runtime} shows that across varying problem sizes, the vendor recommended optimisations to the matrix multiplication code lead to increased performance. Note that a matrix size of 80 is small -- overheads attached to optimisation techniques may be causing the observed decrease in performance as some optimisations are performed.
+	Figure \ref{fig: matmul runtime} shows that across varying problem sizes, the vendor recommended optimisations to the matrix multiplication code lead to increased performance. 
+	%Note that a matrix size of 80 is small -- overheads attached to optimisation techniques may be causing the observed decrease in performance as some optimisations are performed.
 
 	\begin{table*}[h!]
 	\centering
@@ -346,7 +354,7 @@
 	
 	AIWC's metrics strongly reward optimisations that tend to localise memory accesses. Shared memory buffers are typically smaller than global memory arrays when programming for GPUs due to hardware limitations on sizes of shared memory buffers \cite{cudamanual}. However, the metrics currently measured by AIWC do not have a direct causal relation to code patterns that optimise memory accesses on GPUs. The proposed relative local memory usage metric is the first to correspond to a recommended optimisation strategy of using fast on-chip shared memory. Further, we find that all current AIWC metrics do not measure any sizeable difference between \texttt{coalescedAB}, \texttt{coalescedABT} and \texttt{alignedABT} codes. We address the root cause of this -- a lack of temporal information about memory accesses, in the next section.%TODO READ THIS SECTION
 	
-	\section{Discussion} \label{discussion}
+	\section{Discussion } \label{discussion}
 	
 	AIWC metrics are inherently lossy. Given the set of metrics calculated for an unknown kernel, we can not reconstruct the kernel based on these metrics. Specifically to memory access pattern analysis, the calculation of memory address entropy of a kernel relies only on the frequency distribution of memory accesses to all addresses accessed by the kernel. We observe that calculation of memory address entropy does not make use of temporal information. The order of sequential memory accesses performed by each thread, as well as addresses requested in parallel by multiple threads in an OpenCL thread group, are both vital in accurately characterising parallel codes.
 	
@@ -374,75 +382,75 @@
 		legend style={at={(0.55,0.75)},anchor=west}
 		]
 		
-		\addplot[mark=*] coordinates {
-			(0, 4.01)
-			(1,3.51)
-			(2,3.01)
-			(3,2.50)
-			(4,2.00)
-			(5,2.00)
-			(6,2.00)
-			(7,2.00)
-			(8,2.00)
-			(9,1.5)
-			(10,1.00)
+		\addplot coordinates {%[mark=*] coordinates {
+			(0, 3.987)
+			(1, 3.987)
+			(2, 3.987)
+			(3, 3.49)
+			(4, 2.992)
+			(5, 2.494)
+			(6, 1.996)
+			(7, 1.996)
+			(8, 1.996)
+			(9, 1.996)
+			(10, 1.996)
 		};
 		
 		
-		\addplot[mark=star] coordinates {
-			(0,4.24)
-			(1,3.71)
-			(2,3.18)
-			(3,2.65)
-			(4,2.12)
-			(5,1.62)
-			(6,1.12)
-			(7,0.62)
-			(8,0.12)
-			(9,0.09)
-			(10,0.06)
+		\addplot coordinates {%[mark=star] coordinates {
+			(0,3.952)
+			(1,3.952)
+			(2,3.952)
+			(3,3.459)
+			(4,2.965)
+			(5,2.472)
+			(6,1.979)
+			(7,1.506)
+			(8,1.033)
+			(9,0.5598)
+			(10,0.08691)
 		};
 		
-		\addplot[mark=triangle*] coordinates {
-			(0,4.45)
-			(1,3.89)
-			(2,3.33)
-			(3,2.78)
-			(4,2.23)
-			(5,1.73)
-			(6,1.23)
-			(7,0.73)
-			(8,0.23)
-			(9,0.17)
-			(10,0.11)
+		\addplot coordinates {%[mark=triangle*] coordinates {
+			(0,4.145)
+			(1,4.145)
+			(2,4.145)
+			(3,3.628)
+			(4,3.11)
+			(5,2.598)
+			(6,2.075)
+			(7,1.603)
+			(8,1.13)
+			(9,0.6579)
+			(10,0.1854)
 		};
 		
-		\addplot[mark=square] coordinates {
-			(0,4.45)
-			(1,3.45)
-			(2,2.45)
-			(3,1.45)
-			(4,0.45)
-			(5,0.40)
-			(6,0.34)
-			(7,0.28)
-			(8,0.23)
-			(9,0.17)
-			(10,0.11)
+		\addplot [mark=*, color=red] coordinates {%[mark=square] coordinates {
+			(0,4.145)
+			(1,4.145)
+			(2,4.145)
+			(3,3.2)
+			(4,2.254)
+			(5,1.308)
+			(6,0.3621)
+			(7,0.318)
+			(8,0.2738)
+			(9,0.2296)
+			(10,0.1854)
 		};
 		
-		\addplot[mark=o] coordinates {
-			(0,4.45)
-			(1,3.45)
-			(2,2.45)
-			(3,1.45)
-			(4,0.45)
-			(5,0.40)
-			(6,0.34)
-			(7,0.28)
-			(8,0.23)
-			(9,0.17)
-			(10,0.11)
+		\addplot coordinates {%[mark=o] coordinates {
+			(0,4.145)
+			(1,4.145)
+			(2,4.145)
+			(3,3.2)
+			(4,2.254)
+			(5,1.308)
+			(6,0.3621)
+			(7,0.318)
+			(8,0.2738)
+			(9,0.2296)	
+			(10,0.1854)
 		};
 		\end{axis}
 		\end{tikzpicture}
@@ -456,7 +464,7 @@
 	
 	\textit{Calculate}: for each timestamp $t = t_0 .. t_{last}$, calculate the n-bits dropped entropy of memory addresses accessed by all threads in a work group within the timestamp $t$. Here $n$ can range between 1 and 10 as was the case for $LMAE$.
 	
-	\textit{Summarise}: average the collected entropy values across all the timestamps to calculate the parallel spatial locality metrics for one thread group. We then average the n-bits dropped entropy summaries across thread groups to obtain the \textit{n-bits dropped parallel spatial locality metrics} for the kernel's execution.
+	\textit{Summarise}: average the collected entropy values across all the timestamps to calculate the \emph{parallel spatial locality} metrics for one thread group. We then average the n-bits dropped entropy summaries across thread groups to obtain the \textit{n-bits dropped parallel spatial locality metrics} for the kernel's execution.
 	
 %	\begin{equation} \label{entropyaverage}
 %		\log_2(\frac{\sum_{t = t_0}^{t_{last}} 2^{E_{n,t}}}{\#{timestamps}})
@@ -470,13 +478,19 @@
 	Such programs will perform better on GPUs, as they will make better use of both global memory access coalescing and shared memory bank structures.
 	To a lesser extent, the proposed metric captures performance-critical memory access patterns on CPUs, as pulling a single cacheline from global memory services the threads running on all CPU cores. %TODO: Josh, Beau -- Please check this paragraph.
 	
-	In figure \ref{fig: matmul parallel spatial locality} we see theoretical calculations for the proposed parallel spatial locality metric for each of the matrix multiplication kernels from section \ref{motivating example}. In particular we observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest drop-offs in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses. It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simpleMultiply}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of shared memory, where accesses tend to be localised simply due to the small size of shared on-chip memory typically available on GPUs. Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels. It accurately depicts a steeper drop-off for the more optimised \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels. This is a significant improvement over the state-of-the-art AIWC metrics in characterising how codes localise shared memory accesses to better use the hardware provided.
+	\section{Results} \label{results}
 	
-	\section{Results}
+	In figure \ref{fig: matmul parallel spatial locality} we see the proposed parallel spatial locality metric obtained using the AIWC tool for each of the matrix multiplication kernels from section \ref{motivating example}. In particular we observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest drop-offs in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses. It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simpleMultiply}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of shared memory, where accesses tend to be localised simply due to the small size of shared on-chip memory typically available on GPUs. Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels. It accurately depicts a steeper drop-off for the more optimised \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels. This is a significant improvement over the state-of-the-art AIWC metrics in characterising how codes localise shared memory accesses to better use the hardware provided.
 	
-	The Extended OpenDwarfs benchmark suite is a set of OpenCL workload classified according to the computation patterns or Dwarfs. First presented in 2006, the Dwarfs categorise 
-	We present the results of running the AIWC tool on the Extended OpenDwarfs benchmark suite \cite{opendwarfs2017base,extendedopendwarfs}.
+	The Extended OpenDwarfs benchmark suite is a set of OpenCL workload classified according to the computation patterns or Dwarfs. 
+	First presented in 2006, the 13 Berkeley Dwarfs are common computational and communication patterns that aim to capture the landscape of parallel computing workloads. 
+	The Extended OpenDwarfs benchmark suite presents a set of highly diverse workloads that each fit the programming paradigm of one of the 13 Berkeley Dwarfs.
+	The workloads presented are not optimised for any specific architecture -- hence optimisations using OpenCL local memory (which translates to CUDA shared memory) are not performed. 
+	Many of these benchmarks can be run with up to four \emph{problem sizes} based on the sizes of caches found in modern CPU memory heirarchies \cite{johnston18opendwarfs}.
+	We present the results of running the AIWC tool on selected benchmarks from the Extended OpenDwarfs benchmark suite \cite{opendwarfs2020head,johnston18opendwarfs} with a problem size setting of \emph{medium}, except for the GEM benchmark, which is run at a setting of \emph{tiny}.
+	For benchmarks such as BFS with multiple kernel invocations per run, the AIWC parallel spatial locality metrics of the invocation with the highest executed LLVM-SPIR instructions is presented for analysis. Note that the presented benchmarks use 32 bit numbers (OpenCL \texttt{int} and \texttt{float} types), and so dropping up to two bits of the memory addresses accessed will not change the data entropy, since any addresses accessed are at least 4 bytes apart.
 	
+	%TODO: Add some info about EOD benchmarks here?
 	
 	% As all kernels access memory on word (32-bit) boundaries, there is no effect in dropping upto two bits in the PSL metric...
 	\begin{figure*}[h!]
@@ -489,29 +503,30 @@
 		xticklabel style={text height=2ex},
 		ymin=0,
 		ylabel={$n$-bits dropped Parallel Spatial Locality}, xlabel={\# of bits skipped},
+		legend columns=4,
 		ylabel style={at={(axis description cs:0.05,.5)},anchor=south},
-		legend entries={\texttt{GEM}, \texttt{NW*}, \texttt{SRAD Kernel 1},\texttt{SRAD Kernel 2},
-			\texttt{CSR}, \texttt{BFS*}, \texttt{LUD Diagonal}, \texttt{LUD Internal}, \texttt{LUD Perimeter}, \texttt{TDM}},
-		legend style={at={(0.55,0.75)},anchor=west}
+		legend entries={\texttt{GEM}, \texttt{NW}, \texttt{SRAD Kernel 1},\texttt{SRAD Kernel 2},
+			\texttt{CSR}, \texttt{BFS Kernel 1}, \texttt{BFS Kernel 2}, \texttt{LUD Diagonal}, \texttt{LUD Perimeter}, \texttt{LUD Internal}, \texttt{TDM}},
+		legend style={at={(0.5,-0.15)},anchor=north}
 		]
 		
 		
-		\addplot[mark=*] coordinates {
+		\addplot coordinates {%[mark=*] coordinates {
 			(0, 0.1139)
 			(1, 0.1139)
 			(2, 0.1139)
-			(3, 0.1139)
-			(4, 0.0989)
-			(5, 0.08402)
-			(6, 0.06914)
-			(7, 0.05431)
-			(8, 0.03938)
-			(9, 0.02442)
-			(10, 0.0124)
+			(3, 0.0989)
+			(4, 0.08402)
+			(5, 0.06914)
+			(6, 0.05431)
+			(7, 0.03938)
+			(8, 0.02442)
+			(9, 0.0124)
+			(10, 0.00038)
 		};
 		
 		
-		\addplot[mark=star] coordinates {
+		\addplot coordinates {%[mark=star] coordinates {
 			(0, 2.175)
 			(1, 2.175)
 			(2, 2.175)
@@ -525,136 +540,204 @@
 			(10, 2.175)
 		};
 		
-		\addplot[mark=*] coordinates {
-			(0, 7.232)
-			(1, 7.232)
-			(2, 7.232)
-			(3, 7.232)
-			(4, 6.351)
-			(5, 5.461)
-			(6, 4.570)
-			(7, 3.678)
-			(8, 3.648)
-			(9, 3.633)
-			(10, 3.625)
+		\addplot coordinates {%[mark=*] coordinates {
+			(0, 7.176)
+			(1, 7.176)
+			(2, 7.176)
+			(3, 6.301)
+			(4, 5.418)
+			(5, 4.533)
+			(6, 3.648)
+			(7, 3.619)
+			(8, 3.605)
+			(9, 3.598)
+			(10, 3.594)
 		};
 		
 		
-		\addplot[mark=star] coordinates {
-			(0, 7.098)
-			(1, 7.098)
-			(2, 7.098)
-			(3, 7.098)
-			(4, 6.223)
-			(5, 5.344)
-			(6, 4.464)
-			(7, 3.583)
-			(8, 3.567)
-			(9, 3.559)
-			(10, 3.556)
+		\addplot coordinates {%[mark=star] coordinates {
+			(0, 7.097)
+			(1, 7.097)
+			(2, 7.097)
+			(3, 6.223)
+			(4, 5.344)
+			(5, 4.464)
+			(6, 3.583)
+			(7, 3.567)
+			(8, 3.559)
+			(9, 3.554)
+			(10, 3.553)
 		};
 		
-		\addplot[mark=triangle*] coordinates {
+		\addplot coordinates {%[mark=triangle*] coordinates {
 			(0, 9.605)
 			(1, 9.605)
 			(2, 9.605)
-			(3, 9.605)
-			(4, 9.478)
-			(5, 9.293)
-			(6, 9.049)
-			(7, 8.761)
-			(8, 8.447)
-			(9, 8.12)
-			(10,7.233)
+			(3, 9.478)
+			(4, 9.293)
+			(5, 9.049)
+			(6, 8.761)
+			(7, 8.447)
+			(8, 8.12)
+			(9,7.233)
+			(10,6.287)
+		};
+
+		\addplot coordinates { %[mark=square] coordinates {
+			(0,4.933)	
+			(1,4.933)
+			(2,4.933)
+			(3,4.89)
+			(4,4.795)
+			(5,4.652)
+			(6,4.456)
+			(7,4.215)
+			(8,3.93)
+			(9,3.608)
+			(10,3.253)
+		};		
+	
+		\addplot coordinates { %[mark=square] coordinates {
+			(0,4.691)
+			(1,4.691)
+			(2,4.691)
+			(3,4.276)
+			(4,3.760)
+			(5,3.171)
+			(6,2.552)
+			(7,1.922)
+			(8,1.286)
+			(9,0.648)
+			(10,0.00776)
 		};
 		
-		\addplot[mark=square] coordinates {
-			(0,4.406)
-			(1,4.406)
-			(2,4.406)
-			(3,4.406)
-			(4,4.361)
-			(5,4.273)
-			(6,4.135)
-			(7,3.941)
-			(8,3.689)
-			(9,3.382)
-			(10,3.029)
-		};
-		
-		\addplot[mark=o] coordinates {
+		\addplot coordinates { %[mark=o] coordinates {
 			(0,1.548)
 			(1,1.548)
 			(2,1.548)
-			(3,1.548)
-			(4,1.305)
-			(5,1.092)
-			(6,0.9385)
+			(3,1.305)
+			(4,1.092)
+			(5,0.9385)
+			(6,0.8796)
 			(7,0.8796)
 			(8,0.8796)
 			(9,0.8796)
 			(10,0.8796)
 		};
+	
+	    \addplot coordinates { %[mark=star] coordinates {
+	    	(0,3.803)
+	    	(1,3.803)
+	    	(2,3.803)
+	    	(3,3.473)
+	    	(4,3.144)
+	    	(5,2.814)
+	    	(6,2.485)
+	    	(7,2.485)
+	    	(8,2.485)
+	    	(9,2.485)
+	    	(10,2.485)
+    	};
+   
+   		\addplot coordinates { %[mark=square*] coordinates {
+   			(0,4.101)
+   			(1,4.101)
+   			(2,4.101)
+   			(3,3.589)
+   			(4,3.077)
+   			(5,2.565)
+   			(6,2.053)
+   			(7,2.053)
+   			(8,2.053)
+   			(9,2.053)
+   			(10,2.053)
+   		};
+	
 		\end{axis}
 		\end{tikzpicture}
 		\caption{Parallel spatial locality metric for selected OpenDwarfs benchmark kernels}
 		\label{fig: opendwarfs parallel spatial locality}
 	\end{figure*}
+
 	\subsection{N-body methods: GEM}
 	
 	% TODO
 	The OpenDwarfs benchmark GEM computes the electrostatic potential of a biomolecule by calculating the sum of charges contributed by all atoms in the biomolecule at each specific surface vertex.
 	This is an embarrassingly parallel problem. Each OpenCL work-item operates on a single surface vertex, finding the electrostatic potential generated by looping through every atom in the biomolecule in a global order. 
 	The computation pattern is highly regular and memory accesses are perfectly synchronised. Atom data is accessed consecutively, with all work-items simultaneously accessing each single atom's data.
-	The parallel spatial locality metric reflects this pattern of efficient memory utilisation (single loads from global memory servicing all OpenCL work-items). The recorded parallel spatial locality approaches the theoretical limit of 0 (0.0124 at 10 bits dropped). This indicates that almost all memory accesses made by the OpenCL kernel are perfectly synchronised between OpenCL threads.
+	The parallel spatial locality metric reflects this pattern of efficient memory utilisation (single loads from global memory servicing all OpenCL work-items). The recorded parallel spatial locality approaches the theoretical limit of 0 (0.0124 at 10 bits dropped). This indicates that almost all memory accesses made by the OpenCL kernel are perfectly synchronised between OpenCL threads. 
+	
+	Performance results \cite{dwarfsonaccelerators, krommydas2016opendwarfs} show that GPUs perform significantly better than CPUs for GEM, as memory unit stalls are at low levels for both CPUs and GPUs due to the highly efficient memory utilisation of this benchmark. 
+	As memory operations do not present a major slowdown, increased FPU compute capability of GPUs leads to far better performance on GPUs than CPUs \cite{krommydas2016opendwarfs}. 
 	
 	\subsection{Dense Linear Algebra: Lower-upper decomposition (LUD)}
 	
-	LUD in OpenDwarfs is a program to decompose an input $N\times N$ matrix as the product of one lower and one upper diagonal matrix. LUD is a Memory access patterns in a dense linear algebra workload such as LUD are typically highly regular and deterministic for each OpenCL work item, based on the the matrix dimension and offset parameters. The OpenDwarfs implementation of LUD \cite{opendwarfs2017base} splits the LUD computation into three kernels: LUD perimeter and diagonal kernels spawn work-items in a single work dimension while LUD internal performs work in both dimensions of the input matrix.
+	LUD in OpenDwarfs is a program to decompose an input $N\times N$ matrix as the product of one lower and one upper diagonal matrix. 
+	Memory access patterns in a dense linear algebra workload such as LUD are typically highly regular and deterministic for each OpenCL work item, based on the matrix dimension and offset parameters. The OpenDwarfs implementation of LUD \cite{opendwarfs2020head} splits the LUD computation into three kernels: \texttt{LUD perimeter} and \texttt{LUD diagonal} kernels spawn work-items in a single work dimension; while \texttt{LUD internal} performs work in both dimensions of the input matrix.
 	
-	LUD perimeter and diagonal partially benefit from memory access coalescing, for the lines of code where all the work-items access contiguous memory along a row of the input matrix. However, when threads parallelly access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. This is reflected in the slow drop in parallel spatial locality for LUD perimeter and diagonal kernels.
-	
-	LUD internal %TODO: 2Dimensional work -- better parallelism
+	The LUD kernels partially benefit from memory access coalescing on GPUs, for the lines of code where all the work-items access contiguous memory along a row of the input matrix. 
+	However, when threads parallelly access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. 
+	This is reflected in the drop in parallel spatial locality for the LUD kernels to approximately half the value at 0 bits skipped. Taking \texttt{LUD internal} as an example, the 0-bits skipped parallel spatial locality metric is 4.101, while the 10-bits skipped parallel spatial locality metric is 2.053. 
+	The swift decline of the metric to 2.053 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localised -- where work-items simultaneously access contiguous memory along a matrix row. 
+	Similar to the presented matrix multiply codes, LUD can be optimised for GPUs by effective utilisation of shared memory \cite{opendwarfs2020head}.
 	
 	%The use of creates imbalanced workload and divergent control flow within work-items in each kernel iteration. While the presence of conditional statements cause some thread divergence in the LUD diagonal kernel, the use of barriers following conditional statements synchronises the threads. LUD diagonal and perimeter kernels , while LUD.
-	
-	...  %TODO: Divergence in the kernels. Make a diagram/code simplification for LUD.
+	%TODO: Divergence in the kernels. Make a diagram/code simplification for LUD.
 	
 	\subsection{Dynamic Programming: Needleman-Wunsch (NW)}
 	
-	Needleman-Wunsch is a dynamic programming algorithm used to perform protein sequence alignment by identifying the similarity level between two strings of Amino acids. Elements in a matrix are computed, with each element dependent on its west, north and north-west neighbours. This dependency enforces a wavefront computation pattern, travelling along the main diagonal of the matrix. Each iteration of the kernels computes over an antidiagonal of the matrix, starting at its top left corner and finishing at its bottom right corner.
+	Needleman-Wunsch is a dynamic programming algorithm used to perform protein sequence alignment by identifying the similarity level between two strings of Amino acids. Elements in a matrix are computed, with each element dependent on its west, north and north-west neighbours. This dependency enforces a wavefront computation pattern, travelling along the main diagonal of the matrix. Each iteration of the kernels computes over an antidiagonal of the matrix, starting at its top left corner, and finishing at its bottom right corner.
 	
-	In particular, the wavefront pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any dropoff in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs this will translate to poor utilisation of both memory access coalescing and caching. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests. 
+	In particular, the wavefront pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any dropoff in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs this will translate to poor utilisation of both memory access coalescing and caching \cite{krommydas2016opendwarfs}. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests -- this is typically performed in GPU optimised implementations of the Needleman-Wunsch algorithm \cite{opendwarfs2020head}. 
 	
 	\subsection{Structured Grids: Speckle Reducing Anisotropic Diffusion (SRAD)}
 	
-	SRAD removes locally correlated noise from images by following a repeated grid update computation pattern. Conditional statements in the code cause thread divergence, potentially within a work-group, to handle boundary conditions. These boundaries constitute a small portion of the executed work-items, especially on larger data-sets and so the effective thread divergence is minimal. Thus, memory access patterns in SRAD are statically determined and relatively localised. The observed rapid drop-off in parallel spatial locality of the SRAD kernels (figure \ref{fig: opendwarfs parallel spatial locality}) is due to the highly localised nature of parallel memory accesses. At each point in the kernels' memory access profile, each work-item $(i,j)$ in an OpenCL work-group accesses the $(i,j)^{th}$ elements of various matrices. The sequential memory access pattern is non-linear since different matrices are accessed consecutively by the kernel, prohibiting ideal caching. However, memory requests made parallelly are highly localised, allowing memory access coalescing on GPUs, greatly reducing the number of memory requests made on each line of the kernel code on GPUs. Thus while cache hit rates are typically low on this benchmark, particularly on GPUs \cite{krommydas2016opendwarfs}, GPUs can hide the latency of global memory accesses through coalescing.
+	SRAD removes locally correlated noise from images by following a repeated grid update computation pattern on image pixel grids. 
+	Conditional statements in the code cause thread divergence, potentially within a work-group, to handle boundary conditions. 
+	These boundaries constitute a small portion of the executed work-items, especially on larger data-sets and so the effective thread divergence is minimal.
+	Memory access patterns in SRAD are statically determined and relatively localised. 
+	Similar to the LUD and \texttt{simpleMultiply} kernels, both SRAD kernels observe a rapid drop-off in parallel spatial locality (figure \ref{fig: opendwarfs parallel spatial locality}) as the number of bits skipped is increased, with the metric stabilising at approximately half its original value when 0 bits are skipped.
+	
+	At each point in the kernels' memory access profile, each work-item with global ID $(i,j)$ in an OpenCL work-group accesses the $(i,j)^{th}$ elements of various matrices. The sequential memory access pattern is non-linear since different matrices are accessed consecutively by the kernel, prohibiting ideal caching \cite{krommydas2016opendwarfs}. However, memory requests made simultaneously by a work-group always fall within a rectangular block of one of the matrices. 
+	This allows memory access coalescing on GPUs for OpenCL work-items accessing contiguous matrix data, greatly reducing the number of memory requests made on each line of the kernel code on GPUs. 
+	However, work-items accessing data along a column of the matrix do not observe memory access coalescing.
+	Thus we observe that while cache hit rates are typically low on this benchmark, particularly on GPUs \cite{krommydas2016opendwarfs}, GPUs can hide the latency of global memory accesses through memory access coalescing to some extent.
 	
 	\subsection{Graph Traversal: BFS}
 	
-	Graph traversal algorithms require pointer chasing operations to traverse nodes of a graph and perform calculations. The Breadth First Search implemented in OpenDwarfs calls OpenCL kernels to traverse nodes immediately connected to the list of nodes at each depth starting from the root node. BFS is characterised by an imbalanced workload per kernel launch depending on the degree of the nodes being operated on -- with only a proportion of launched nodes performing meaningful work. As such the AIWC features collected for each kernel invocation vary significantly. The parallel spatial locality metric collects the entropy of memory accesses at each time step, and workload imbalances are dealt with by averaging entropy scores across all the time steps in the execution of an OpenCL work-group. 
+	Graph traversal algorithms require pointer chasing operations to traverse nodes of a graph and perform calculations. 
+	The Breadth First Search implemented in OpenDwarfs calls two OpenCL kernels to traverse nodes immediately connected to the list of nodes at each depth starting from the root node. 
+	BFS is characterised by an imbalanced workload per kernel launch depending on the degree of the nodes being operated on, with only a proportion of launched nodes performing meaningful work. 
+	As such, the AIWC features collected for each kernel invocation vary significantly. 
+	The parallel spatial locality metric collects the entropy of memory accesses at each time step, and workload imbalances across work-items are dealt with by averaging entropy scores across all the time steps in the execution of an OpenCL work-group. 
 	
-	The memory access patterns in BFS are irregular. Work-items fetch discontinuous memory locations attributed to any particular node in the graph, depending on the connectivity of the node they operate on. The program structure involves multiple levels of pointer-chasing and thus the precise memory address accessed are runtime dependent. This leads to poor parallel spatial locality. Thus, we see a slow dropoff in parallel spatial locality for BFS.
+	Of the two BFS kernels, \texttt{BFS kernel 1} performs the graph traversal necessary to generate a list of neighbours at each node. The memory access patterns in \texttt{BFS kernel 1} are irregular. 
+	Work-items fetch discontinuous memory locations attributed to any particular node in the graph, depending on the connectivity of the node they operate on. 
+	The program structure involves multiple levels of pointer-chasing and thus the precise memory address accessed are runtime dependent. 
+	This leads to poor parallel spatial locality. Thus, we see a slow dropoff in parallel spatial locality for \texttt{BFS kernel 1}.
 	
 	\subsection{Sparse Linear Algebra: CSR}
 	
-	Compressed Sparse Row Matrix-Vector Multiplication (CSR) computes the sum of each of a matrix's row's elements after it is multiplied by a given vector. The matrix is stored in a compressed row storage sparse matrix format, which is very efficient for storage when the number of zero elements is far greater than the number of non-zero elements. Only non-zero elements of each row of a matrix are stored in $Ax$, along with separate arrays $Aj,\ Ap$ indicating the position of each non-zero element in the matrix. Figure \ref{?} depicts the sparse matrix format of storage for a $4\times4$ matrix.
+	Compressed Sparse Row Matrix-Vector Multiplication (CSR) computes the sum of each of a matrix's row's elements after it is multiplied by a given vector. The matrix is stored in a compressed row storage sparse matrix format, which is very efficient for storage when the number of zero elements is far greater than the number of non-zero elements. Three inputs are provided to the CSR kernel. Only non-zero elements of each row of a matrix are stored in $Ax$, along with separate arrays $Aj,\ Ap$ indicating the position of each non-zero element in the matrix.
 	
-	In this particular implementation, a single OpenCL work-item is assigned to compute over each row of the input sparse matrix. Similar to BFS, memory access patterns are runtime-dependent, since the locations of matrix data read by each thread are dependent on the number and position of non-zero values in the sparse-matrix, decided by the values in $Aj$ and $Ap$. This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the very gradual decline in parallel spatial locality as the number of bits dropped is increased.
-	
-	\subsection{Finite State Machine: Temporal Data Mining (TDM)}
-	
-	%TODO
+	In this particular implementation, a single OpenCL work-item is assigned to compute over each row of the input sparse matrix. 
+	The locations of matrix data read by each work-item are dependent on the number and position of non-zero values in the sparse-matrix, which are decided by the values in $Aj$ and $Ap$. 
+	Similar to BFS, this means memory access patterns are runtime-dependent due to indirect addressing (pointer chasing).
+	This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the very gradual decline in parallel spatial locality as the number of bits dropped is increased.
 	
 	\section{Conclusions and Future Work} \label{future work}
 	
-	To the best of our knowledge this work is the first to critically examine architecture independent methods to measure memory access patterns and guide hardware-specific optimisation. We implemented and justified the addition of relative local memory usage to AIWC in our steps to characterise memory-based GPU code optimisations. We have also proposed the methodology to implement a new parallel spatial locality metric to AIWC. Upon implementation, our work would be the first to measure memory access patterns of parallel codes in an architecture-independent, easily interpreted manner.
+	To the best of our knowledge this work is the first to critically examine AIWC's measurement of memory access patterns to guide hardware-specific optimisation. 
+	We implemented and justified the addition of relative local memory usage to AIWC in our steps to characterise memory-based GPU code optimisations.
+	We proposed the concept of parallel spatial locality to capture the idea of closeness of memory accesses made by parallel OpenCL workloads.
+	We then implemented a new parallel spatial locality metric to AIWC, presented results of running AIWC on matrix multiply kernels and selected OpenDwarfs benchmarks and validated our methodology. 
+	Our work is the first to measure memory access patterns of parallel codes in an architecture-independent, easily interpreted manner. %Josh, Beau: is this too bold a claim? If unnecessary, please remove.
 	%TODO UPDATE IN FUTURE
 	
 	Our proposed parallel spatial locality metric may also correlate to some memory-based optimisation strategies for CPUs. Future work would apply the approach followed by this paper to CPU and FPGA architectures to evaluate the viability of an architecture independent characterisation of memory access patterns in codes targeted to these architectures.
 	
-	Future work will provide a concrete implementation of this new parallel spatial locality metric in the AIWC framework. It is then feasible to test these new metrics across a larger set of GPU targeted OpenCL codes. This will allow a critical examination of the effectiveness of both proposed metrics in accurately profiling memory access patterns of these diverse codes.
-
+	Our work focused on measuring memory access patterns in OpenCL codes intends to guide optimisation efforts. Another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _guiding optimisation_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay?
+	
 	\bibliographystyle{plain}
 	\bibliography{bib/bibliography.bib}
 	
