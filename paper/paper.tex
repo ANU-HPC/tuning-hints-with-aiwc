@@ -509,7 +509,7 @@
 	The workloads presented are not optimized for any specific architecture -- hence optimizations using OpenCL local memory (which translates to CUDA shared memory) are not performed. 
 	Many of these benchmarks can be run with up to four \emph{problem sizes} based on the sizes of caches found in modern CPU memory heirarchies \cite{johnston18opendwarfs}.
 	We present the results of running the AIWC tool on selected benchmarks from the Extended OpenDwarfs benchmark suite \cite{opendwarfs2020head,johnston18opendwarfs} with a problem size setting of \emph{medium}, except for the GEM benchmark, which is run at a setting of \emph{tiny}.
-	For benchmarks such as BFS with multiple kernel invocations per run, the AIWC parallel spatial locality metrics of the invocation with the highest executed LLVM-SPIR instructions are presented for analysis. Note that the presented benchmarks use 32 bit numbers (OpenCL \texttt{int} and \texttt{float} types), and so dropping up to 2 bits of the memory addresses accessed will not change the data entropy, since any addresses accessed are at least 4 bytes apart.
+	For benchmarks such as BFS with multiple kernel invocations per run, the AIWC parallel spatial locality metrics of the invocation with the highest executed LLVM-SPIR instructions are presented for analysis. Note that the presented benchmarks use 32 bit numbers (OpenCL \texttt{int} and \texttt{float} types), and so dropping up to 2 bits of the memory addresses accessed will not change the parallel spatial locality, since any addresses accessed are at least 4 bytes apart.
 	
 	%TODO: Add some info about EOD benchmarks here?
 	
@@ -699,7 +699,7 @@
 	The LUD kernels partially benefit from memory access coalescing on GPUs, for the lines of code where all the work-items access contiguous memory along a row of the input matrix. 
 	However, when threads simultaneously access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. 
 	This is reflected in the drop in parallel spatial locality for the LUD kernels to approximately half the value at 0 bits skipped. Taking \texttt{LUD internal} as an example, the 0-bits skipped parallel spatial locality metric is 4.101, while the 10-bits skipped parallel spatial locality metric is 2.053. 
-	The swift decline of the metric to 2.053 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localized -- where work-items simultaneously access contiguous memory along a matrix row. 
+	The swift decline of the metric to 2.053 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localized. This occurs when work-items simultaneously access contiguous memory along a matrix row. 
 	Similar to the presented matrix multiply codes, LUD can be optimized for GPUs by effective utilization of shared memory \cite{opendwarfs2020head}.
 	
 	%The use of creates imbalanced workload and divergent control flow within work-items in each kernel iteration. While the presence of conditional statements cause some thread divergence in the LUD diagonal kernel, the use of barriers following conditional statements synchronizes the threads. LUD diagonal and perimeter kernels , while LUD.
