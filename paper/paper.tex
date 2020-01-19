@@ -140,7 +140,7 @@
 	
 	%What we did briefly
 	Our aim in this paper is to develop a framework to guide HPC software engineers in hardware-dependent code optimization -- specifically by guiding the improvement of memory access patterns.
-	We provide examples of manufacturer-recommended code optimizations to improve memory access patterns on the target architecture, and examine these using the architecture-independent workload characterization (AIWC)~\cite{beauaiwc} plugin for Oclgrind.
+	We provide examples of manufacturer-recommended code optimizations to improve memory access patterns on the target architecture, and examine these using the architecture-independent workload characterization (AIWC)~\cite{beauaiwc} plugin for Oclgrind~\cite{price:15}.
 	Our work highlights the benefits and challenges arising from an architecture-independent analysis of memory-based program characteristics.
 	We propose two new metrics to AIWC to better characterize these memory-based optimizations.
 	We measure the presented codes using the new metrics and demonstrate the metrics' effectiveness in capturing the essence of the optimizations performed.
@@ -219,7 +219,7 @@
 	\end{lstlisting}
 	
 	All the examples above are an incomplete listing of optimization strategies developers can apply to code targeted at NVIDIA GPUs.
-	In section~\ref{results}, we will compare the collected AIWC metrics with the expected effect of each optimization, to examine how effectively our methodology uncovers underlying bottlenecks and guides optimization efforts.
+	In section~\ref{preliminary results}, we will compare the collected AIWC metrics with the expected effect of each optimization to examine how effectively our methodology uncovers underlying bottlenecks and guides optimization efforts.
 	
 	\flushbottom
 	\section{Related Work} \label{related work}
@@ -282,7 +282,7 @@
 	
 	Relative local memory usage is an example of a metric that is useful to measure performance critical access patterns on some architectures such as GPUs, and not others, such as CPUs. CPUs do not typically have a notion of user controlled on-chip memory shared between hardware threads such as NVIDIA GPUs' shared memory. This is a natural consequence of programming for a heterogeneous system. Specific code patterns may translate to performance improvements only on certain hardware.
 	
-	In the original AIWC tool \cite{beau_johnston_2017_1134175}, global and local memory address entropy (MAE) were calculated using physical addresses of memory used by the Oclgrind simulator back-end of AIWC. This caused irregularities in entropy calculations across multiple runs of the same simulation. We improved the calculation of memory address entropy by using \textit{virtual addresses} to calculate MAE values using an abstract ideal address space on which all memory accesses by the kernel occur. This allows AIWC to accurately abstract over the hardware and ISA-specific differences in memory layouts across the diverse hardware targets.
+	In the original AIWC tool \cite{beau_johnston_2017_1134175}, global and local memory address entropy (MAE) were calculated using physical addresses of memory used by the Oclgrind simulator~\cite{price:15} back-end of AIWC. This caused irregularities in entropy calculations across multiple runs of the same simulation. We improved the calculation of memory address entropy by using \textit{virtual addresses} to calculate MAE values using an abstract ideal address space on which all memory accesses by the kernel occur. This allows AIWC to accurately abstract over the hardware and ISA-specific differences in memory layouts across the diverse hardware targets.
 		
 	\section{Preliminary Results} \label{preliminary results}
 	
@@ -516,8 +516,8 @@
 	It accurately depicts a steeper reduction for the more optimized \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels.
 	This is a significant improvement over the state-of-the-art AIWC metrics in characterizing how codes localize simultaneous memory accesses to better use the hardware provided.
 	
-	The Extended OpenDwarfs benchmark suite is a set of OpenCL workload classified according to the computation patterns or Dwarfs. 
-	First presented in 2006, the 13 Berkeley Dwarfs are common computational and communication patterns that aim to capture the landscape of parallel computing workloads. 
+	The Extended OpenDwarfs benchmark suite~\cite{johnston18opendwarfs, krommydas2016opendwarfs} is a set of OpenCL workload classified according to the computation patterns or Dwarfs. 
+	First presented in 2006, the 13 Berkeley Dwarfs are common computational and communication patterns that aim to capture the landscape of parallel computing workloads \cite{asanovic2006landscape}. 
 	The Extended OpenDwarfs benchmark suite presents a set of highly diverse workloads that each fit the programming paradigm of one of the 13 Berkeley Dwarfs.
 	The workloads presented are not optimized for any specific architecture -- hence optimizations using OpenCL local memory (which translates to CUDA shared memory) are not performed. 
 	Many of these benchmarks can be run with up to four problem sizes based on the sizes of caches found in modern CPU memory hierarchies~\cite{johnston18opendwarfs}.
