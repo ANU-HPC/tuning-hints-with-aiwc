@@ -103,7 +103,7 @@
 	We propose the concept of parallel spatial locality -- the closeness of memory accesses simultaneously issued by OpenCL work-items (threads).
 	We implement the parallel spatial locality metric in the AIWC framework, and analyse gathered results on matrix multiply and the Extended OpenDwarfs OpenCL benchmarks.
 	The differences in the obtained parallel spatial locality metric across implementations of matrix multiply reflect the optimizations performed.
-	The new metric can be used to distinguish between the OpenDwarfs benchmarks based on the memory access patters affecting their performance on various architectures.
+	The new metric can be used to distinguish between the OpenDwarfs benchmarks based on the memory access patterns affecting their performance on various architectures.
 	%Current methods of analysing program behaviour have largely relied on performance counters on various architectures to provide architecture dependent metrics of code behaviour. 
 	%However, if workload characteristics are tied to architectural features specific to a particular system, these analysis frameworks may not generalize to alternative or future systems.
 	%Considering the trend towards heterogeneous computing, we work towards a framework to guide developers in optimizing codes for any given hardware target using the architecture independent workload characterization (AIWC) tool -- specifically in profiling memory access patterns of code. 
@@ -148,8 +148,9 @@
 	The structure of this paper is as follows.
 	In section~\ref{motivating example} we use the example of matrix multiplication on a GPU to showcase the specific vendor-recommended optimizations our work aims to measure.
 	In section~\ref{related work} we discuss how AIWC and its precursors profiled memory access patterns in an architecture-independent fashion, and relevant architecture dependent approaches to memory access profiling.
-	In section \ref{method} we present a methodology to critically examine the architecture-independent workload characterization tool, which we use in section~\ref{results} to measure the accuracy of AIWC in profiling the impact of performance optimizations to various OpenCL codes.
-	In section~\ref{discussion} we suggest new methods to accurately capture code patterns correlating to hardware-specific memory optimizations.
+	In section \ref{method} we present a methodology to critically examine the architecture-independent workload characterization tool, which we use in section~\ref{preliminary results} to measure the accuracy of AIWC in profiling the impact of performance optimizations to various OpenCL codes.
+	In section~\ref{discussion} we discuss these preliminary results, and propose and implement our parallel spatial locality metric into the AIWC framework.
+	In section~\ref{results} we present the collected metric for the matrix multiplication kernels and selected OpenDwarfs benchmarks to validate our methodology in this paper.
 	Finally, in section~\ref{future work} we discuss further avenues to extend our work and conclude.
 	
 	\section{Motivating Example} \label{motivating example}
@@ -170,7 +171,7 @@
 	Global memory is typically located off-chip and accesses induce large delays.
 	NVIDIA GPUs coalesce global memory loads and stores issued within thread-groups into as few DRAM transactions as possible.
 	Multiple global memory loads and stores are coalesced into a single transaction when certain device-specific conditions are met. 
-	On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache line in global memory \cite{cudamanual}. Appendix \ref{coalescedAMultiply} contains the \texttt{coalescedAMultiply} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory. 
+	On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache line in global memory \cite{cudamanual}. Appendix \ref{coalescedAMultiply} contains the \texttt{coalescedAMultiply} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory (OpenCL \texttt{\_\_local} memory). 
 	
 	% 9.2.1.2: Misaligned access pattern
 	
@@ -183,7 +184,7 @@
 	
 	\subsection{Optimizing handling of shared memory} 
 	
-	NVIDIA shared memory is divided into multiple banks -- stored in independent memory modules -- to allow parallel accesses to shared memory. Bank conflicts occur when shared memory in the same bank is accessed concurrently. The code in \texttt{coalescedAB} kernel is further optimized by implicitly transposing tiles of Matrix $A$ while loading from global memory. This improves memory bank utilization during reads to shared memory tiles are performed during the necessary computation. The \texttt{coalescedABT} kernel demonstrates this optimization by modifying lines 20,21 of \texttt{coalescedAB} to:
+	NVIDIA shared memory is divided into multiple banks -- stored in independent memory modules -- to allow parallel accesses to shared memory. Bank conflicts occur when shared memory in the same bank is accessed concurrently. The code in \texttt{coalescedAB} kernel is further optimized by implicitly transposing tiles of Matrix $A$ while loading from global memory. This improves memory bank utilization during reads to shared memory. The \texttt{coalescedABT} kernel demonstrates this optimization by modifying lines 20,21 of \texttt{coalescedAB} to:
 	
 	\begin{lstlisting}[firstnumber=20]
 		ASub[localCol][localRow] = A[tiledRow];
@@ -223,7 +224,7 @@
 	
 	Hoste and Eeckout \cite{hoste2007microarchitecture} show that while conventional architecture dependent characteristics are useful in locating performance bottlenecks, they can hide the underlying, inherent program behaviour causing performance bottlenecks. A conceptual understanding of the performance characteristics of complex codes is necessary for the programmer to effectively optimize these codes. Architecture dependent characteristics typically include instructions per cycle (IPC), cache and branch prediction miss rates, page faults and DRAM bus data transfer rates. These are typically collected using hardware performance counters available on most target architectures. These performance counters do not serve to guide optimization beyond highlighting potential bottlenecks \cite{hoste2007microarchitecture, ganesan2008performance}. Further, in many cases, architecture dependent characteristics usually cannot be directly correlated to specific code patterns. For example, the causes of high cache miss rates in the execution of a program are too complex and widely variant on microarchitecture specific features such as cache size, prefetch behaviour and cache placement policies. In summary, we argue that a HPC developer tasked with optimizing code for a given hardware target would benefit from architecture-independent metrics of the code that can be conceptually correlated to hardware specific optimization patterns. Such architecture-independent metrics will effectively guide the HPC developer's workflow in both finding and fixing bottlenecks in code performance.
 	
-	The Architecture-Independent Workload Characterization (AIWC) tool \cite{beauaiwc} relies on a set of instruction set architecture (ISA)-independent features determined by Shao and Brooks \cite{shao2013isa}. AIWC measures memory based metrics to characterize the target code's memory behaviours. AIWC firstly collects aggregate simple counts such as the (i) total memory footprint, the total number of unique addresses accessed; and (ii) 90\% memory footprint, the number of unique addresses covering 90\% of memory accesses. A small ratio of 90\% memory footprint to total memory footprint correlates to programs accessing the same small subset of memory addresses repeatedly -- which can be linked to increased performance in a cached memory hierarchy.
+	The Architecture-Independent Workload Characterization (AIWC) tool \cite{beauaiwc} relies on a set of instruction set architecture (ISA)-independent features determined by Shao and Brooks \cite{shao2013isa}. AIWC measures memory based metrics to characterize the target code's memory behaviours. AIWC first collects aggregate simple counts such as the (i) total memory footprint, the total number of unique addresses accessed; and (ii) 90\% memory footprint, the number of unique addresses covering 90\% of memory accesses. A small ratio of 90\% memory footprint to total memory footprint correlates to programs accessing the same small subset of memory addresses repeatedly -- which can be linked to increased performance in a cached memory hierarchy.
 	
 	AIWC also records the global memory address entropy (GMAE), a positive real number corresponding to the randomness of the memory access distribution of a program. To measure locality of memory accesses, AIWC collects the local memory address entropy (LMAE) of memory addresses accessed after dropping $n$ least significant bits of all memory addresses accessed by the program. To calculate this, AIWC collects a frequency distribution of all non-register memory accesses by all threads in the target kernel. Using the collected frequency distribution, AIWC calculates 10 separate local memory address entropy (LMAE) values according to increasing number of least significant bits (LSB) skipped using
 	%in the following fashion. The information entropy of the collection of memory addresses accessed, after dropping $n$ LSBs and accounting for the number of memory accesses performed to each address is counted as the $n$-bits skipped LMAE. Given the frequency distribution of memory addresses accessed by the program, 
@@ -268,11 +269,11 @@
 	
 	The simulation environment described in CuMAPz and the attached analysis framework is highly specific to CUDA enabled GPUs. Replicating the CuMAPz framework for all target architectures is challenging. However, CuMAPz is an interesting simulator from the standpoint of this paper's work since it adheres to the core parts of NVIDIA GPUs' memory models in its analysis, while allowing the user to specify their GPU model specific hardware information.
 	
-	Our approach is an architecture independent analysis of memory access patterns that provides metrics correlating to similar performance critical memory access optimizations as CuMAPz. We aim to further the state of the art by providing a framework to guide developers in optimizing OpenCL codes for any given target architecture. To the best our knowledge, none of the previous works present a set of performance metrics that accurately characterize memory access patterns of parallel applications independent of the target architecture.
+	Our approach is an architecture independent analysis of memory access patterns to provide metrics correlating to similar performance critical memory access optimizations as CuMAPz. We aim to further the state of the art by providing a framework to guide developers in optimizing OpenCL codes for any given target architecture. To the best our knowledge, none of the previous works present a set of performance metrics that accurately characterize memory access patterns of parallel applications independent of the target architecture.
 	
 	\section{Methodology} \label{method}
 	
-	To provide memory access pattern metrics that represent vendor recommended optimizations on GPUs, we improved AIWC by adding a new metric: relative local memory usage. This measures the proportion of all memory accesses from the symbolic execution of the kernel that occurred to memory allocated as \texttt{\_\_local}. On GPUs, this memory address space is mapped to fast on-chip shared memory.
+	To provide memory access pattern metrics that represent vendor recommended optimizations on GPUs, we improved AIWC by adding our first new metric: relative local memory usage. This measures the proportion of all memory accesses from the symbolic execution of the kernel that occurred to memory allocated as \texttt{\_\_local}. On NVIDIA GPUs, this memory address space is mapped to fast on-chip shared memory.
 	
 	Relative local memory usage is an example of a metric that is useful to measure performance critical access patterns on some architectures such as GPUs, and not others, such as CPUs. CPUs do not typically have a notion of user controlled on-chip memory shared between hardware threads such as NVIDIA GPUs' shared memory. This is a natural consequence of programming for a heterogeneous system. Specific code patterns may translate to performance improvements only on certain hardware.
 	
@@ -368,11 +369,11 @@
 	
 	\textit{Relative local memory usage}: As reliance on NVIDIA GPUs' shared memory increases in each kernel from \texttt{simpleMultiply} to \texttt{coalescedAB}, we find that the ratio of OpenCL local memory usage increases as expected.
 	
-	\textit{Global and local MAE}: Entropy measurements decrease from \texttt{simpleMultiply} to \texttt{coalescedAB}. This is explained by the optimizations performed incrementally reducing accesses to matrix $A$ and $B$, and instead performing the bulk of computations on smaller tiles in on-chip shared memory. We observe an almost completely uniform distribution of memory accesses in \texttt{simpleMultiply}, where the program makes $N$ loads to each element of $A$ and $B$ with $N$ the dimension of the matrices. The frequency distribution of memory addresses accessed become increasingly non-uniform as we perform less accesses to matrices $A$ and $B$ and offset this by increasing the frequency of accesses to smaller, more localized shared memory buffers. The non-uniformity of relative frequency with which each memory cell is accessed by the program translates directly to decreases in local and global memory entropy values as reliance on small shared memory buffers increases from \texttt{simpleMultiply} to \texttt{coalescedAB}.
+	\textit{Global and local MAE}: Entropy measurements decrease from \texttt{simpleMultiply} to \texttt{coalescedAB}. This is explained by the optimizations performed incrementally reducing accesses to matrix $A$ and $B$, and instead performing the bulk of computations on smaller tiles in local memory. We observe an almost completely uniform distribution of memory accesses in \texttt{simpleMultiply}, where the program makes $N$ loads to each element of $A$ and $B$ with $N$ the dimension of the matrices. The frequency distribution of memory addresses accessed become increasingly non-uniform as we perform less accesses to matrices $A$ and $B$ and offset this by increasing the frequency of accesses to smaller, more localized local memory buffers. The non-uniformity of relative frequency with which each memory cell is accessed by the program translates directly to decreases in local and global memory entropy values as reliance on small local memory buffers increases from \texttt{simpleMultiply} to \texttt{coalescedAB}.
 	
-	\textit{Memory Footprint}: Similar to trends in global and local MAE, we find that the ratio of 90\% memory footprint to total memory footprint decreases from $60.12\%$ for \texttt{simpleMultiply} to $0.25\%$ (\texttt{coalescedAB}). Increased utilization of shared memory in the optimized kernels means that the shared memory buffers make up a greater proportion of total memory accesses in the program. As the shared memory buffers are small and reused within a workgroup, the memory footprint of the shared memory buffers is also smaller. 
+	\textit{Memory Footprint}: Similar to trends in global and local MAE, we find that the ratio of 90\% memory footprint to total memory footprint decreases from $60.12\%$ for \texttt{simpleMultiply} to $0.25\%$ (\texttt{coalescedAB}). Increased utilization of local memory in the optimized kernels means that the local memory buffers make up a greater proportion of total memory accesses in the program. As the local memory buffers are small and reused within a workgroup, the memory footprint of the local memory buffers is also smaller. 
 	
-	AIWC's metrics strongly reward optimizations that tend to localize memory accesses. Shared memory buffers are typically smaller than global memory arrays when programming for GPUs due to hardware limitations on sizes of shared memory buffers \cite{cudamanual}. However, the metrics currently measured by AIWC do not have a direct causal relation to code patterns that optimize memory accesses on GPUs. The proposed relative local memory usage metric is the first to correspond to a recommended optimization strategy of using fast on-chip shared memory. Further, we find that all current AIWC metrics do not measure any sizeable difference between \texttt{coalescedAB}, \texttt{coalescedABT} and \texttt{alignedABT} codes. We address the root cause of this -- a lack of temporal information about memory accesses, in the next section.%TODO READ THIS SECTION
+	AIWC's metrics strongly reward optimizations that tend to localize memory accesses. Local memory buffers are typically smaller than global memory arrays when programming for GPUs due to hardware limitations on sizes of shared memory \cite{cudamanual}. However, the metrics currently measured by AIWC do not have a direct causal relation to code patterns that optimize memory accesses on GPUs. The proposed relative local memory usage metric is the first to correspond to a recommended optimization strategy of using fast on-chip shared memory. Further, we find that all current AIWC metrics do not measure any sizeable difference between \texttt{coalescedAB}, \texttt{coalescedABT} and \texttt{alignedABT} codes. We address the root cause of this -- a lack of temporal information about memory accesses, in the next section.%TODO READ THIS SECTION
 	
 	\section{Discussion } \label{discussion}
 	
@@ -474,7 +475,7 @@
 		};
 		\end{axis}
 		\end{tikzpicture}
-		\caption{Calculated parallel spatial locality metric for matrix multiply kernels for 256 $\times$ 256 matrix multiplication}
+		\caption{Parallel spatial locality metric obtained from AIWC for matrix multiply kernels for 256 $\times$ 256 matrix multiplication}
 		\label{fig: matmul parallel spatial locality}
 	\end{figure*}
 	
@@ -482,7 +483,7 @@
 	
 	\textit{Record}: we first record memory accesses performed by each thread in an OpenCL thread group as described above to achieve a global ordering of all memory accesses performed in a thread group. This ordering is collected in the form of logical timestamps ($t_0 .. t_{last}$) at which memory accesses occur.
 	
-	\textit{Calculate}: for each timestamp $t = t_0 .. t_{last}$, calculate the n-bits dropped entropy of memory addresses accessed by all threads in a work group within the timestamp $t$. Here $n$ can range between 1 and 10 as was the case for $LMAE$.
+	\textit{Calculate}: for each timestamp $t = t_0 .. t_{last}$, calculate the n-bits dropped entropy of memory addresses accessed by all threads in a work group within the timestamp $t$. Here $n$ can range between 0 and 10 as was the case for $LMAE$.
 	
 	\textit{Summarize}: average the collected entropy values across all the timestamps to calculate the parallel spatial locality metrics for one thread group. We then average the n-bits dropped entropy summaries across thread groups to obtain the \textit{n-bits dropped parallel spatial locality metrics} for the kernel's execution.
 	
@@ -494,13 +495,13 @@
 
 	The proposed metric is a parallel computing analogue for MICA's data stride metric that measures the distance between consecutive data accesses in a single threaded environment. 
 	In parallel programs, to accurately measure spatial locality of accesses, we must consider memory accesses performed by multiple threads in a close temporal scope. 
-	The proposed metric calculates the locality of accesses in each time step of the program's execution and steeper drop-offs in $n$-bits dropped parallel spatial locality scores will be observed in programs that access nearby memory addresses within the same timestamp.
+	The proposed metric calculates the locality of accesses in each time step of the program's execution and steeper drop-offs in $n$-bits dropped parallel spatial locality scores will be observed in programs that often access nearby memory addresses within the same timestamp.
 	Such programs will perform better on GPUs, as they will make better use of both global memory access coalescing and shared memory bank structures.
 	To a lesser extent, the proposed metric captures performance-critical memory access patterns on CPUs, as pulling a single cacheline from global memory services the threads running on all CPU cores. %TODO: Josh, Beau -- Please check this paragraph.
 	
 	\section{Results} \label{results}
 	
-	In figure \ref{fig: matmul parallel spatial locality} we see the proposed parallel spatial locality metric obtained using the AIWC tool for each of the matrix multiplication kernels from section \ref{motivating example}. In particular we observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest drop-offs in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses. It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simpleMultiply}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of shared memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs. Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels. It accurately depicts a steeper drop-off for the more optimized \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels. This is a significant improvement over the state-of-the-art AIWC metrics in characterizing how codes localize shared memory accesses to better use the hardware provided.
+	In figure \ref{fig: matmul parallel spatial locality} we see the proposed parallel spatial locality metric obtained using the AIWC tool for each of the matrix multiplication kernels from section \ref{motivating example}. In particular we observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest drop-offs in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses. It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simpleMultiply}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of local memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs. Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels. It accurately depicts a steeper drop-off for the more optimized \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels. This is a significant improvement over the state-of-the-art AIWC metrics in characterizing how codes localize simultaneous memory accesses to better use the hardware provided.
 	
 	The Extended OpenDwarfs benchmark suite is a set of OpenCL workload classified according to the computation patterns or Dwarfs. 
 	First presented in 2006, the 13 Berkeley Dwarfs are common computational and communication patterns that aim to capture the landscape of parallel computing workloads. 
@@ -508,7 +509,7 @@
 	The workloads presented are not optimized for any specific architecture -- hence optimizations using OpenCL local memory (which translates to CUDA shared memory) are not performed. 
 	Many of these benchmarks can be run with up to four \emph{problem sizes} based on the sizes of caches found in modern CPU memory heirarchies \cite{johnston18opendwarfs}.
 	We present the results of running the AIWC tool on selected benchmarks from the Extended OpenDwarfs benchmark suite \cite{opendwarfs2020head,johnston18opendwarfs} with a problem size setting of \emph{medium}, except for the GEM benchmark, which is run at a setting of \emph{tiny}.
-	For benchmarks such as BFS with multiple kernel invocations per run, the AIWC parallel spatial locality metrics of the invocation with the highest executed LLVM-SPIR instructions is presented for analysis. Note that the presented benchmarks use 32 bit numbers (OpenCL \texttt{int} and \texttt{float} types), and so dropping up to two bits of the memory addresses accessed will not change the data entropy, since any addresses accessed are at least 4 bytes apart.
+	For benchmarks such as BFS with multiple kernel invocations per run, the AIWC parallel spatial locality metrics of the invocation with the highest executed LLVM-SPIR instructions are presented for analysis. Note that the presented benchmarks use 32 bit numbers (OpenCL \texttt{int} and \texttt{float} types), and so dropping up to 2 bits of the memory addresses accessed will not change the data entropy, since any addresses accessed are at least 4 bytes apart.
 	
 	%TODO: Add some info about EOD benchmarks here?
 	
@@ -526,7 +527,7 @@
 		legend columns=4,
 		ylabel style={at={(axis description cs:0.05,.5)},anchor=south},
 		legend entries={\texttt{GEM}, \texttt{NW}, \texttt{SRAD Kernel 1},\texttt{SRAD Kernel 2},
-			\texttt{CSR}, \texttt{BFS Kernel 1}, \texttt{BFS Kernel 2}, \texttt{LUD Diagonal}, \texttt{LUD Perimeter}, \texttt{LUD Internal}, \texttt{TDM}},
+			\texttt{CSR}, \texttt{BFS Kernel 1}, \texttt{BFS Kernel 2}, \texttt{LUD Diagonal}, \texttt{LUD Perimeter}, \texttt{LUD Internal}},
 		legend style={at={(0.5,-0.15)},anchor=north}
 		]
 		
@@ -688,7 +689,7 @@
 	The parallel spatial locality metric reflects this pattern of efficient memory utilization (single loads from global memory servicing all OpenCL work-items). The recorded parallel spatial locality approaches the theoretical limit of 0 (0.0124 at 10 bits dropped). This indicates that almost all memory accesses made by the OpenCL kernel are perfectly synchronized between OpenCL threads.
 	
 	Performance results \cite{johnston18opendwarfs, krommydas2016opendwarfs} show that GPUs perform significantly better than CPUs for GEM, as memory unit stalls are at low levels for both CPUs and GPUs due to the highly efficient memory utilization of this benchmark. 
-	As memory operations do not present a major slowdown, increased FPU compute capability of GPUs leads to far better performance on GPUs than CPUs \cite{krommydas2016opendwarfs}. 
+	As memory operations do not present a major slowdown, superior FPU compute capability of GPUs leads to far better performance on GPUs than CPUs \cite{krommydas2016opendwarfs}. 
 	
 	\subsection{Dense Linear Algebra: Lower-upper decomposition (LUD)}
 	
@@ -696,7 +697,7 @@
 	Memory access patterns in a dense linear algebra workload such as LUD are typically highly regular and deterministic for each OpenCL work item, based on the matrix dimension and offset parameters. The OpenDwarfs implementation of LUD \cite{opendwarfs2020head} splits the LUD computation into three kernels: \texttt{LUD perimeter} and \texttt{LUD diagonal} kernels spawn work-items in a single work dimension; while \texttt{LUD internal} performs work in both dimensions of the input matrix.
 	
 	The LUD kernels partially benefit from memory access coalescing on GPUs, for the lines of code where all the work-items access contiguous memory along a row of the input matrix. 
-	However, when threads parallelly access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. 
+	However, when threads simultaneously access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. 
 	This is reflected in the drop in parallel spatial locality for the LUD kernels to approximately half the value at 0 bits skipped. Taking \texttt{LUD internal} as an example, the 0-bits skipped parallel spatial locality metric is 4.101, while the 10-bits skipped parallel spatial locality metric is 2.053. 
 	The swift decline of the metric to 2.053 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localized -- where work-items simultaneously access contiguous memory along a matrix row. 
 	Similar to the presented matrix multiply codes, LUD can be optimized for GPUs by effective utilization of shared memory \cite{opendwarfs2020head}.
@@ -708,7 +709,7 @@
 	
 	Needleman-Wunsch is a dynamic programming algorithm used to perform protein sequence alignment by identifying the similarity level between two strings of Amino acids. Elements in a matrix are computed, with each element dependent on its west, north and north-west neighbours. This dependency enforces a wavefront computation pattern, travelling along the main diagonal of the matrix. Each iteration of the kernels computes over an antidiagonal of the matrix, starting at its top left corner, and finishing at its bottom right corner.
 	
-	In particular, the wavefront pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any dropoff in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs this will translate to poor utilization of both memory access coalescing and caching \cite{krommydas2016opendwarfs}. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests -- this is typically performed in GPU optimized implementations of the Needleman-Wunsch algorithm \cite{opendwarfs2020head}. 
+	In particular, the wavefront pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any dropoff in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs this translates to poor utilization of both memory access coalescing and caching \cite{krommydas2016opendwarfs}. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests -- this is typically performed in GPU optimized implementations of the Needleman-Wunsch algorithm \cite{opendwarfs2020head}. 
 	
 	\subsection{Structured Grids: Speckle Reducing Anisotropic Diffusion (SRAD)}
 	
@@ -731,32 +732,33 @@
 	As such, the AIWC features collected for each kernel invocation vary significantly. 
 	The parallel spatial locality metric collects the entropy of memory accesses at each time step, and workload imbalances across work-items are dealt with by averaging entropy scores across all the time steps in the execution of an OpenCL work-group. 
 	
-	Of the two BFS kernels, \texttt{BFS kernel 1} performs the graph traversal necessary to generate a list of neighbours at each node. The memory access patterns in \texttt{BFS kernel 1} are irregular. 
+	Of the two BFS kernels, it is \texttt{BFS kernel 1} that performs the graph traversal necessary to generate a list of neighbours at each node. The memory access patterns in \texttt{BFS kernel 1} are irregular. 
 	Work-items fetch discontinuous memory locations attributed to any particular node in the graph, depending on the connectivity of the node they operate on. 
 	The program structure involves multiple levels of pointer-chasing and thus the precise memory address accessed are runtime dependent. 
 	This leads to poor parallel spatial locality. Thus, we see a slow dropoff in parallel spatial locality for \texttt{BFS kernel 1}.
 	
 	\subsection{Sparse Linear Algebra: CSR}
 	
-	Compressed Sparse Row Matrix-Vector Multiplication (CSR) computes the sum of each of a matrix's row's elements after it is multiplied by a given vector. The matrix is stored in a compressed row storage sparse matrix format, which is very efficient for storage when the number of zero elements is far greater than the number of non-zero elements. Three inputs are provided to the CSR kernel. Only non-zero elements of each row of a matrix are stored in $Ax$, along with separate arrays $Aj,\ Ap$ indicating the position of each non-zero element in the matrix.
+	Compressed Sparse Row Matrix-Vector Multiplication (CSR) computes the sum of each of a matrix's row's elements after it is multiplied by a given vector. The matrix is stored in a compressed row storage sparse matrix format, which is very efficient for storage when the number of zero elements is far greater than the number of non-zero elements. Three inputs are provided to the CSR kernel. The non-zero elements of a matrix are stored in row-major order in $Ax$, along with separate arrays $Aj,\ Ap$ indicating the position of each non-zero element in the matrix.
 	
 	In this particular implementation, a single OpenCL work-item is assigned to compute over each row of the input sparse matrix. 
 	The locations of matrix data read by each work-item are dependent on the number and position of non-zero values in the sparse-matrix, which are decided by the values in $Aj$ and $Ap$. 
-	Similar to BFS, this means memory access patterns are runtime-dependent due to indirect addressing (pointer chasing).
-	This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the very gradual decline in parallel spatial locality as the number of bits dropped is increased.
+	Similar to BFS, this means memory access patterns are runtime-dependent due to indirect addressing.
+	This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The collected parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the gradual decline in parallel spatial locality as the number of bits dropped is increased.
 	
 	\section{Conclusions and Future Work} \label{future work}
 	
 	To the best of our knowledge this work is the first to critically examine AIWC's measurement of memory access patterns to guide hardware-specific optimization. 
-	We implemented and justified the addition of relative local memory usage to AIWC in our steps to characterize memory-based GPU code optimizations.
-	We proposed the concept of parallel spatial locality to capture the idea of closeness of memory accesses made by parallel OpenCL workloads.
-	We then implemented a new parallel spatial locality metric to AIWC, presented results of running AIWC on matrix multiply kernels and selected OpenDwarfs benchmarks and validated our methodology. 
-	Our work is the first to measure memory access patterns of parallel codes in an architecture-independent, easily interpreted manner. %Josh, Beau: is this too bold a claim? If unnecessary, please remove.
+	We implemented and justified the addition of relative local memory usage to AIWC to help characterize memory-based GPU code optimizations.
+	We proposed the concept of parallel spatial locality to capture the idea of closeness of memory accesses made by parallel OpenCL workloads, and implemented a new parallel spatial locality metric to AIWC.
+	We ran the modified AIWC tool on matrix multiply kernels and selected OpenDwarfs benchmarks, presenting results and analysis to validate our methodology. 
+	%Our work is the first to measure memory access patterns of parallel codes in an architecture-independent, easily interpreted manner. %Josh, Beau: is this too bold a claim? If unnecessary, please remove.
 	%TODO UPDATE IN FUTURE
 	
-	Our proposed parallel spatial locality metric may also correlate to some memory-based optimization strategies for CPUs. Future work would apply the approach followed by this paper to CPU and FPGA architectures to evaluate the viability of an architecture independent characterization of memory access patterns in codes targeted to these architectures.
+	Our proposed parallel spatial locality metric may also correlate to some memory-based optimization strategies for CPUs. 
+	Future work would apply the approach followed by this paper to optimizations for CPU and FPGA architectures to critically evaluate the viability of AIWC in analyzing memory access patterns in codes targeted to these architectures.
 	
-	Our work focused on measuring memory access patterns in OpenCL codes intends to guide optimization efforts. Another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _guiding optimization_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay?
+	Our work in this paper intended to guide optimization efforts. Another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _guiding optimization_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay in this paragraph?
 	
 	\bibliographystyle{plain}
 	\bibliography{bib/bibliography.bib}
