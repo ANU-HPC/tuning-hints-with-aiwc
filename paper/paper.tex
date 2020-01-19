@@ -154,23 +154,32 @@
 	
 	\section{Motivating Example} \label{motivating example}
 	
-	We aim to capture the essence of vendor recommended optimizations for target architectures in our metrics.
-	We demonstrate the optimization strategies being analysed by presenting a simple unoptimized matrix multiplication kernel for input square matrices of order $N$, and then improve the memory access patterns of this kernel by incrementally performing optimizations recommended in the CUDA Optimization Handbook \cite{cudaoptimisation} for NVIDIA GPUs.
+	We aim to capture the essence of vendor-recommended optimizations for target architectures in our metrics.
+	We demonstrate the optimization strategies using an OpenCL kernel which multiplies square matrices of order $N$.
+	We start with a simple unoptimized kernel, and then improve the memory access patterns of this kernel by incrementally performing the optimizations recommended in the CUDA Optimization Handbook \cite{cudaoptimisation} for NVIDIA GPUs.
 	These incrementally optimized OpenCL codes are then analysed using AIWC to determine the accuracy in profiling favourable memory access patterns of the current framework and the proposed extensions to AIWC.
 	
-	\subsection{Simple unoptimized matrix multiplication}
+	\subsection{Simple Unoptimized Matrix Multiplication}
 	
-	The unoptimized matrix multiplication kernel presented in Appendix \ref{simpleMultiply} is used as a baseline to validate the performance improvements measured from each following optimization. Each thread of the kernel computes the $(globalRow, globalCol)$ element of matrix $C$ by reading the appropriate row and column from matrices $A$ and $B$ respectively.
+	The unoptimized matrix multiplication kernel presented in Appendix~\ref{simpleMultiply} is used as a baseline to validate the performance improvements measured from each following optimization.
+	Each thread of the kernel updates the $(globalRow, globalCol)$ element of matrix $C$ by computing the dot product of the corresponding row of $A$ and column of $B$.
 	
 	\subsection{Using Shared Memory to Coalesce Global Memory Access to Matrix A} 
 	
-	We first notice that the number of global memory accesses to matrices A and B increases at an order $O(N^3)$ with respect to matrix size $N$. Global memory is typically located off-chip and accesses induce large delays. NVIDIA GPUs coalesce global memory loads and stores issued within thread-groups into as few DRAM transactions as possible. Multiple global memory loads and stores are coalesced into a single transaction when certain device specific conditions are met. On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache-line in global memory \cite{cudamanual}. Appendix \ref{coalescedAMultiply} contains the \texttt{coalescedAMultiply} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory. 
+	We first notice that the number of global memory accesses to matrices A and B increases as $O(N^3)$ with respect to matrix size $N$.
+	Global memory is typically located off-chip and accesses induce large delays.
+	NVIDIA GPUs coalesce global memory loads and stores issued within thread-groups into as few DRAM transactions as possible.
+	Multiple global memory loads and stores are coalesced into a single transaction when certain device-specific conditions are met. 
+	On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache line in global memory \cite{cudamanual}. Appendix \ref{coalescedAMultiply} contains the \texttt{coalescedAMultiply} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory. 
 	
 	% 9.2.1.2: Misaligned access pattern
 	
 	\subsection{Using Shared Memory to store Tiles of Matrix B} 
 	
-	The code is further optimized by improving how the previous \texttt{coalescedAMultiply} kernel handles accesses to Matrix $B$. While each thread in coalescedAMultiply accesses only a single element of matrix $A$ from global memory, each thread accesses a full column of matrix $B$. The repeated reads to elements of matrix $B$ across multiple threads can be alleviated by reading tiles from matrix $B$ into shared memory. Appendix \ref{coalescedABMultiply} contains the \texttt{coalescedAB} kernel which performs this optimization.
+	The code is further optimized by improving how the previous \texttt{coalescedAMultiply} kernel reads from Matrix $B$.
+	While each thread in coalescedAMultiply reads only a single element of matrix $A$ from global memory, each thread reads a full column of matrix $B$.
+	The repeated reads of elements of matrix $B$ across multiple threads can be alleviated by reading tiles from matrix $B$ into shared memory.
+	Appendix~\ref{coalescedABMultiply} contains the \texttt{coalescedAB} kernel which performs this optimization.
 	
 	\subsection{Optimizing handling of shared memory} 
 	
@@ -198,14 +207,16 @@
 		\label{fig: Simple memory misalignment}
 	\end{figure}
 	
-	A similar principle applies when using shared memory. Bank conflicts may be reduced by aligning allocations of shared memory buffers. The \texttt{alignedABT} kernel improves the alignment of shared memory tiles in \texttt{coalescedABT}. An arbitrary large alignment value of 4096 is chosen as it is larger than the size of modern hardwares' cache lines and attributed to the local array declarations in the existing code as shown below.
+	A similar principle applies when using shared memory. Bank conflicts may be reduced by aligning allocations of shared memory buffers. The \texttt{alignedABT} kernel improves the alignment of shared memory tiles in \texttt{coalescedABT}.
+	An arbitrary large alignment value of 4096 is chosen as it is larger than the cache line size of modern hardware and attributed to the local array declarations in the existing code as shown below.
 	
 	\begin{lstlisting}
 		__local float aTile[TILE_DIM][TILE_DIM] __attribute__ ((aligned(4096)));
 		__local float bTile[TILE_DIM][TILE_DIM] __attribute__ ((aligned(4096)));
 	\end{lstlisting}
 	
-	All the examples above are an incomplete listing of optimization strategies developers can perform to code targeted at NVIDIA GPUs. We analyse the correlations between the collected AIWC metrics for each of these kernels and our conceptual understanding of GPU memory optimizations. This allows us to examine how effectively our methodology uncovers underlying bottlenecks and guides optimization efforts.
+	All the examples above are an incomplete listing of optimization strategies developers can apply to code targeted at NVIDIA GPUs.
+	In section~\ref{results}, we will compare the collected AIWC metrics with the expected effect of each optimization, to examine how effectively our methodology uncovers underlying bottlenecks and guides optimization efforts.
 	
 	\flushbottom
 	\section{Related Work} \label{related work}
