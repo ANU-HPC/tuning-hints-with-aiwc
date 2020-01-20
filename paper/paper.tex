@@ -225,16 +225,22 @@
 	\flushbottom
 	\section{Related Work} \label{related work}
 	
-	Hoste and Eeckout \cite{hoste2007microarchitecture} show that while conventional architecture dependent characteristics are useful in locating performance bottlenecks, they can hide the underlying, inherent program behaviour causing performance bottlenecks. A conceptual understanding of the performance characteristics of complex codes is necessary for the programmer to effectively optimize these codes. Architecture dependent characteristics typically include instructions per cycle (IPC), cache and branch prediction miss rates, page faults and DRAM bus data transfer rates. These are typically collected using hardware performance counters available on most target architectures. These performance counters do not serve to guide optimization beyond highlighting potential bottlenecks \cite{hoste2007microarchitecture, ganesan2008performance}. Further, in many cases, architecture dependent characteristics usually cannot be directly correlated to specific code patterns.
+	Hoste and Eeckout \cite{hoste2007microarchitecture} show that while conventional architecture-dependent characteristics are useful in locating performance bottlenecks, they can hide the underlying, inherent program behaviour causing performance bottlenecks.
+	A conceptual understanding of the performance characteristics of complex codes is necessary for the programmer to effectively optimize these codes.
+	Architecture-dependent characteristics typically include instructions per cycle (IPC), cache and branch prediction miss rates, page faults and DRAM bus data transfer rates. These are typically collected using hardware performance counters available on most target architectures. These performance counters do not serve to guide optimization beyond highlighting potential bottlenecks \cite{hoste2007microarchitecture, ganesan2008performance}.
+	Further, in many cases, architecture-dependent characteristics cannot be directly correlated to specific code patterns.
 	For example, the causes of high cache miss rates in the execution of a program are complex and depend on microarchitecture specific features such as cache size, prefetch behaviour and cache placement policies.
 	A HPC developer tasked with optimizing code for a given hardware target would benefit from architecture-independent metrics of the code that can be used to measure the effect of code modifications.
     These metrics would help to guide the developer in both finding and fixing performance bottlenecks.
 	
-	To address limitations of conventional microarchitecture-dependent characteristics, Hoste and Eeckout~\cite{hoste2007microarchitecture} developed the Microarchitecture-Independent Workload Characterization tool (MICA).
-	They observed that performance counter based approaches to profiling codes often failed to find underlying program features that map to improved or worsened usage of performance critical hardware features of the target architecture.
+	To address the limitations of conventional microarchitecture-dependent characteristics, Hoste and Eeckout~\cite{hoste2007microarchitecture} developed the Microarchitecture-Independent Workload Characterization tool (MICA).
+	They observed that performance counter-based approaches to profiling codes often failed to find underlying program features that map to improved or worsened usage of performance-critical hardware features of the target architecture.
 	The MICA framework is a holistic characterization tool, and thus collects features including instruction mix, instruction-level parallelism, register traffic, data stream strides and branch predictability.
 	
-	Of these metrics, data stream strides are of particular interest in memory access pattern profiling. MICA's stride length metric measures the distance between consecutive memory accesses in a single threaded application. For CPU architectures running single threaded applications, this metric correlates to the spatial locality of memory accesses -- a measure of how closely bunched are memory access in nearby times. This is directly correlated to cache reuse rates, critical to code performance on CPUs \cite{inteloptimisation}. %Intel optimization manual.
+	Of these metrics, data stream strides are of particular interest in memory access pattern profiling.
+	MICA's stride length metric measures the distance between consecutive memory accesses in a single-threaded application.
+	For CPU architectures running single-threaded applications, this metric correlates to the spatial locality of memory accesses -- a measure of how closely bunched are memory access in nearby times.
+	This is directly correlated to cache reuse rates, critical to code performance on CPUs \cite{inteloptimisation}. %Intel optimization manual.
 	
 	The MICA approach was tailored for single-threaded applications as the metrics collected rely heavily on Pin instrumentation \cite{luk2005pin}.
 	As such, MICA is unsuited to analysing HPC workloads with heavy use of parallelism.
@@ -245,7 +251,7 @@
 	CuMAPz analyses CUDA codes structurally and simulates code execution on the memory hierarchy of specific NVIDIA GPU models.
 	
 	During simulation of the target code, CuMAPz records all memory accesses in various buffers to simulate the global and shared memories on NVIDIA GPUs.
-	Using this detailed simulation data, CuMAPz can estimate the performance critical (i) shared memory data reuse profit, (ii) profit from coalesced access (iii) memory channel skew cost and (iv) bank conflict cost characteristics of the target code.
+	Using this detailed simulation data, CuMAPz can estimate the performance-critical (i) shared memory data reuse profit, (ii) profit from coalesced access (iii) memory channel skew cost and (iv) bank conflict cost characteristics of the target code.
 	
 	The simulation environment used by CuMAPz and the attached analysis framework is highly specific to CUDA enabled GPUs.
 	Replicating the CuMAPz framework for all target architectures is challenging.
@@ -253,7 +259,7 @@
 	
 	Our approach is an architecture-independent analysis of memory access patterns to provide metrics correlating to similar performance critical memory access optimizations as CuMAPz.
 	We aim to further the state of the art by providing a framework to guide developers in optimizing OpenCL codes for any given target architecture.
-	To the best our knowledge, none of the previous works present a set of performance metrics that accurately characterize memory access patterns of parallel applications independent of the target architecture.
+	To the best our knowledge, none of the previous works presents a set of performance metrics that accurately characterize memory access patterns of parallel applications independent of the target architecture.
 	
 	The Architecture-Independent Workload Characterization (AIWC) tool \cite{beauaiwc} collects a set of instruction set architecture (ISA)-independent features based on those identified by Shao and Brooks \cite{shao2013isa}.
 	AIWC runs as a plugin to the Oclgrind~\cite{price:15} framework, which simulates OpenCL kernel execution on an ideal device according to the OpenCL execution and memory models.
@@ -350,7 +356,9 @@
 	In addition to the memory metrics reported in \cite{beauaiwc}, we added a new metric of relative local memory usage.
 	This measures the proportion of all memory accesses from the symbolic execution of the kernel that occurred to memory allocated as \texttt{\_\_local}.
 	On NVIDIA GPUs, this memory address space is mapped to fast on-chip shared memory.
-	Relative local memory usage is an example of a metric that is useful to measure performance critical access patterns on some architectures such as GPUs, and not others, such as CPUs. CPUs do not typically have a notion of user controlled on-chip memory shared between hardware threads such as NVIDIA GPUs' shared memory. This is a natural consequence of programming for a heterogeneous system. Specific code patterns may translate to performance improvements only on certain hardware.
+	Relative local memory usage is an example of a metric that is useful to measure performance-critical access patterns on some architectures such as GPUs, and not others, such as CPUs.
+	CPUs do not typically have a notion of user-controlled on-chip memory shared between hardware threads such as NVIDIA GPUs' shared memory.
+	This is a natural consequence of programming for a heterogeneous system. Specific code patterns may translate to performance improvements only on certain hardware.
 	
 	In the original AIWC tool \cite{beau_johnston_2017_1134175}, global and local memory address entropy (MAE) were calculated using physical addresses of memory used by the Oclgrind simulator back-end of AIWC. This caused irregularities in entropy calculations across multiple runs of the same simulation. We improved the calculation of memory address entropy by using \textit{virtual addresses} to calculate MAE values using an abstract ideal address space on which all memory accesses by the kernel occur. This allows AIWC to accurately abstract over the hardware and ISA-specific differences in memory layouts across the diverse hardware targets.
 
