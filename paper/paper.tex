@@ -172,7 +172,7 @@
 	NVIDIA GPUs coalesce global memory loads and stores issued within thread-groups into as few DRAM transactions as possible.
 	Multiple global memory loads and stores are coalesced into a single transaction when certain device-specific conditions are met. 
 	On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache line in global memory~\cite{cudamanual}.
-	Appendix~\ref{coalescedAMultiply} contains the \texttt{coalescedAMultiply} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory (OpenCL \texttt{\_\_local} memory). 
+	Appendix~\ref{coalescedAMultiply} contains the \texttt{coalescedA} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory (OpenCL \texttt{\_\_local} memory). 
 	
 	% 9.2.1.2: Misaligned access pattern
 	
@@ -286,25 +286,25 @@
 			xtick={simple,coalA,coalAB,coalABT,alignABT},
 			xticklabel style={text height=2ex},
 			ymin=0,
-			ylabel={Execution time ($\mu s$)}, xlabel={Kernel},
+			ylabel={Execution time (ms)}, xlabel={Kernel},
 			ylabel style={at={(axis description cs:0.1,.5)},anchor=south},
 			legend entries={$N=80\ \ \ \ $,$N=256\ \ $},
 			legend style={at={(0.6,0.45)},anchor=west}
 			]
 			
 			\addplot coordinates {%[mark=*] coordinates {
-				(simple,31)
-				(coalA,19)
-				(coalAB,20)
-				(coalABT,18)
-				(alignABT,18)
+				(simple,.031)
+				(coalA,.019)
+				(coalAB,.020)
+				(coalABT,.018)
+				(alignABT,.018)
 			};
 			\addplot coordinates {%[mark=star] coordinates {
-				(simple,325)
-				(coalA,75)
-				(coalAB,81)
-				(coalABT,55)
-				(alignABT,55)
+				(simple,.325)
+				(coalA,.075)
+				(coalAB,.081)
+				(coalABT,.055)
+				(alignABT,.055)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
@@ -315,30 +315,31 @@
 			xtick={simple,coalA,coalAB,coalABT,alignABT},
 			xticklabel style={text height=2ex},
 			ymin=0,
-			ylabel={Execution time ($\mu s$)}, xlabel={Kernel},
+			ylabel={Execution time (ms)}, xlabel={Kernel},
 			ylabel style={at={(axis description cs:0.1,.5)},anchor=south},
 			legend entries={$N=1408$,$N=2048$},
-			legend style={at={(0.6,0.45)},anchor=west}
+			legend style={at={(0.6,0.45)},anchor=west},
+			scaled ticks=false
 			]
 			
 			\addplot [mark=*, color=brown] coordinates {%[mark=triangle*] coordinates {
-				(simple,46920)
-				(coalA,8783)
-				(coalAB,9237.5)
-				(coalABT,5307)
-				(alignABT,5272)
+				(simple,46.920)
+				(coalA,8.783)
+				(coalAB,9.238)
+				(coalABT,5.307)
+				(alignABT,5.272)
 			};
 			\addplot [mark=star] coordinates {%[mark=square] coordinates {
-				(simple,130682.0)
-				(coalA,28602)
-				(coalAB,27939)
-				(coalABT,16179)
-				(alignABT,16071)
+				(simple,130.682)
+				(coalA,28.602)
+				(coalAB,27.939)
+				(coalABT,16.179)
+				(alignABT,16.071)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
 		}
-		\caption{NVIDIA Tesla P100 Runtime performance of section \ref{motivating example} codes averaged over 100 runs}
+		\caption{Execution time of matrix multiplication kernels (NVIDIA Tesla P100)}
 		\label{fig: matmul runtime}
 	\end{figure*}
 	
@@ -352,7 +353,9 @@
 		
 	\section{Preliminary Results} \label{preliminary results}
 
-	Figure \ref{fig: matmul runtime} shows that across varying problem sizes, the vendor recommended optimizations to the matrix multiplication code lead to increased performance. 
+	Figure \ref{fig: matmul runtime} shows execution times for the matrix multiplication kernels presented in section~\ref{motivating example} for $N \times N$ matrices of different sizes.
+	We recorded kernel execution time exclusive of data transfer on an NVIDIA Tesla P100 using NVIDIA OpenCL 1.2 CUDA 10.1.236 (driver 418.87), and took the average of 100 runs.
+	Across varying problem sizes, the vendor recommended optimizations to the matrix multiplication code lead to increased performance. 
 	%Note that a matrix size of 80 is small -- overheads attached to optimization techniques may be causing the observed decrease in performance as some optimizations are performed.
 
 	\begin{table*}[h!]
@@ -373,13 +376,13 @@
 
 	Table \ref{matmul aiwc table} summarizes AIWC memory metrics collected for each of the matrix multiply kernels in section \ref{motivating example}. Note that only two LMAE values are shown for brevity. We now analyse the effectiveness of AIWC metrics in profiling the NVIDIA recommended memory optimizations applied to the matrix multiplication kernel.
 	
-	\textit{Relative local memory usage}: As reliance on NVIDIA GPUs' shared memory increases in each kernel from \texttt{simpleMultiply} to \texttt{coalescedAB}, we find that the proportion of OpenCL local memory usage increases as expected.
+	\textit{Relative local memory usage}: As reliance on NVIDIA GPUs' shared memory increases in each kernel from \texttt{simple} to \texttt{coalescedAB}, we find that the proportion of OpenCL local memory usage increases as expected.
 	
-	\textit{Global and local MAE}: Entropy measurements decrease from \texttt{simpleMultiply} to \texttt{coalescedAB}, as the optimizations reduce the number of reads from matrices $A$ and $B$ in global memory, replacing these with reads from smaller tiles in local memory.
-	We observe an almost completely uniform distribution of memory accesses in \texttt{simpleMultiply}, where the program makes $N$ loads to each element of $A$ and $B$ with $N$ the dimension of the matrices.
-	The distribution of memory accesses becomes increasingly non-uniform as we perform fewer accesses to matrices $A$ and $B$ and more accesses to smaller local memory buffers, resulting in decreases in local and global memory entropy values from \texttt{simpleMultiply} to \texttt{coalescedAB}.
+	\textit{Global and local MAE}: Entropy measurements decrease from \texttt{simple} to \texttt{coalescedAB}, as the optimizations reduce the number of reads from matrices $A$ and $B$ in global memory, replacing these with reads from smaller tiles in local memory.
+	We observe an almost completely uniform distribution of memory accesses in \texttt{simple}, where the program makes $N$ loads to each element of $A$ and $B$ with $N$ the dimension of the matrices.
+	The distribution of memory accesses becomes increasingly non-uniform as we perform fewer accesses to matrices $A$ and $B$ and more accesses to smaller local memory buffers, resulting in decreases in local and global memory entropy values from \texttt{simple} to \texttt{coalescedAB}.
 	
-	\textit{Memory Footprint}: Similar to trends in global and local MAE, we find that the ratio of 90\% memory footprint to total memory footprint decreases from $60.12\%$ for \texttt{simpleMultiply} to $0.25\%$ (\texttt{coalescedAB}). Increased utilization of local memory in the optimized kernels means that the local memory buffers make up a greater proportion of total memory accesses in the program. As the local memory buffers are small and reused within a workgroup, the memory footprint of the local memory buffers is also smaller. 
+	\textit{Memory Footprint}: Similar to trends in global and local MAE, we find that the ratio of 90\% memory footprint to total memory footprint decreases from $60.12\%$ for \texttt{simple} to $0.25\%$ (\texttt{coalescedAB}). Increased utilization of local memory in the optimized kernels means that the local memory buffers make up a greater proportion of total memory accesses in the program. As the local memory buffers are small and reused within a workgroup, the memory footprint of the local memory buffers is also smaller. 
 	
 	AIWC's metrics strongly reward optimizations that tend to localize memory accesses. Local memory buffers are typically smaller than global memory arrays when programming for GPUs due to hardware limitations on sizes of shared memory \cite{cudamanual}. However, the metrics currently measured by AIWC do not have a direct causal relation to code patterns that optimize memory accesses on GPUs. The proposed relative local memory usage metric is the first to correspond to a recommended optimization strategy of using fast on-chip shared memory. Further, we find that all current AIWC metrics do not measure any sizeable difference between \texttt{coalescedAB}, \texttt{coalescedABT} and \texttt{alignedABT} codes.
 	We address this by proposing another new metric for locality of memory accesses in the following section.
@@ -394,10 +397,10 @@
 	We propose a new architecture-independent metric, \emph{parallel spatial locality}, to measure memory access patterns in parallel programs.
 	The proposed metric is inspired by CuMAPz' direct approaches to measuring optimization specific characteristics of CUDA codes.
 	
-	AIWC currently collects a list of all memory accessed by each thread of execution.
-	In the OpenCL programming model, threads within a work groups execute the same code and are allowed to cooperate on \textit{local memory} addresses.
+	During simulation, AIWC collects a list of all memory accesses by each thread of execution.
+	In the OpenCL programming model, threads within a work groups execute the same code and share access to \textit{local memory}.
 	We can group together memory accesses of threads in a work group at each logical time step in the symbolic execution of the code.
-	We argue that analysing the accesses occuring at the same logical time step is an accurate, conceptually sound method of predicting the extent of memory access coalescing and bank conflicts we are likely to find upon executing the code on a GPU.
+	On a GPU, memory accesses executed at the same time by different threads in a work group are likely to interact, determining the extent of memory access coalescing and bank conflicts.
 	
 		\begin{figure*}[h!]
 		\centering
@@ -410,7 +413,7 @@
 		ymin=0,
 		ylabel={$n$-bits dropped Parallel Spatial Locality}, xlabel={\# of bits skipped},
 		ylabel style={at={(axis description cs:0.05,.5)},anchor=south},
-		legend entries={\texttt{simpleMultiply},\texttt{coalescedAMultiply},
+		legend entries={\texttt{simple},\texttt{coalescedA},
 			\texttt{coalescedAB}, \texttt{coalescedABT}, \texttt{alignedABT}},
 		legend style={at={(0.55,0.75)},anchor=west}
 		]
@@ -515,8 +518,8 @@
 	\section{Results} \label{results}
 	
 	In figure \ref{fig: matmul parallel spatial locality} we see the proposed parallel spatial locality metric obtained using the AIWC tool for each of the matrix multiplication kernels from section \ref{motivating example}.
-	In particular, we observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest reductions in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses.
-	It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simpleMultiply}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of local memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs.
+	We observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest reductions in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses.
+	It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simple}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of local memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs.
 	Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels.
 	It accurately depicts a steeper reduction for the more optimized \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels.
 	This is a significant improvement over the state-of-the-art AIWC metrics in characterizing how codes localize simultaneous memory accesses to better use the hardware provided.
@@ -735,7 +738,7 @@
 	Conditional statements in the code cause thread divergence, potentially within a work-group, to handle boundary conditions. 
 	These boundaries constitute a small portion of the executed work-items, especially on larger data-sets and so the effective thread divergence is minimal.
 	Memory access patterns in SRAD are statically determined and relatively localized. 
-	Similar to the LUD and \texttt{simpleMultiply} kernels, both SRAD kernels observe a rapid drop-off in parallel spatial locality (figure \ref{fig: opendwarfs parallel spatial locality}) as the number of bits skipped is increased, with the metric stabilizing at approximately half its original value when 0 bits are skipped.
+	Similar to the LUD and \texttt{simple} kernels, both SRAD kernels observe a rapid drop-off in parallel spatial locality (figure \ref{fig: opendwarfs parallel spatial locality}) as the number of bits skipped is increased, with the metric stabilizing at approximately half its original value when 0 bits are skipped.
 	
 	At each point in the kernels' memory access profile, each work-item with global ID $(i,j)$ in an OpenCL work-group accesses the $(i,j)^{th}$ elements of various matrices. The sequential memory access pattern is non-linear since different matrices are accessed consecutively by the kernel, prohibiting ideal caching \cite{krommydas2016opendwarfs}. However, memory requests made simultaneously by a work-group always fall within a rectangular block of one of the matrices. 
 	This allows memory access coalescing on GPUs for OpenCL work-items accessing contiguous matrix data, greatly reducing the number of memory requests made on each line of the kernel code on GPUs. 
@@ -783,7 +786,7 @@
 	
 	\begin{appendix}
 		
-		\section{\texttt{simpleMultiply} kernel} \label{simpleMultiply}
+		\section{\texttt{simple} kernel} \label{simpleMultiply}
 		
 		\begin{lstlisting}
 		__kernel void simpleMultiply(__global float *A,
@@ -804,7 +807,7 @@
 		
 		\end{lstlisting}
 		
-		\section{\texttt{coalescedAMultiply} kernel} \label{coalescedAMultiply}
+		\section{\texttt{coalescedA} kernel} \label{coalescedAMultiply}
 
 			
 		\begin{lstlisting}
@@ -842,7 +845,7 @@
 		\section{\texttt{coalescedAB} kernel} \label{coalescedABMultiply}
 			
 		\begin{lstlisting}
-		__kernel void coalescedAB(
+		__kernel void coalescedABMultiply(
 				const __global float* A,
 				const __global float* B,
 				__global float* C,
