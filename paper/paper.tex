@@ -535,9 +535,11 @@
 	
 	The Extended OpenDwarfs benchmark suite~\cite{johnston18opendwarfs, krommydas2016opendwarfs} is a set of diverse OpenCL workloads.
 	Each benchmark is assigned to one of the 13 Berkeley Dwarfs, common computational and communication patterns which aim to capture the landscape of parallel computing workloads \cite{asanovic2006landscape}. 
+	To show that the proposed parallel spatial locality metric is useful for understanding performance properties of a wide range of application codes, we present the results of running the AIWC tool on selected benchmarks from the suite~\cite{opendwarfs2020head}.
 	The workloads presented are not optimized for any specific architecture -- hence optimizations using OpenCL local memory (which translates to CUDA shared memory) are not performed. 
+	
 	Many of these benchmarks can be run with up to four problem sizes based on the sizes of caches found in modern CPU memory hierarchies~\cite{johnston18opendwarfs}.
-	We present the results of running the AIWC tool on selected benchmarks from the Extended OpenDwarfs benchmark suite \cite{opendwarfs2020head,johnston18opendwarfs} with a problem size setting of \emph{medium}, except for the GEM benchmark, which is run at a setting of \emph{tiny}.
+	For these results we used a problem size setting of \emph{medium}, except for the GEM benchmark, which is run at a setting of \emph{tiny}.
 	For benchmarks such as BFS that have multiple kernel invocations per run, we present the AIWC parallel spatial locality metrics for the invocation with the highest number of LLVM-SPIR instructions executed.
 	Note that the presented benchmarks use 32-bit numeric types (OpenCL \texttt{int} and \texttt{float}), so dropping up to 2 bits of the memory addresses accessed will not change the parallel spatial locality, since any addresses accessed are at least 4 bytes apart.
 	
