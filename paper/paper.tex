@@ -142,15 +142,15 @@
 	Our aim in this paper is to develop a framework to guide HPC software engineers in hardware-dependent code optimization -- specifically by guiding the improvement of memory access patterns.
 	We provide examples of manufacturer-recommended code optimizations to improve memory access patterns on the target architecture, and examine these using the architecture-independent workload characterization (AIWC)~\cite{beauaiwc} plugin for Oclgrind~\cite{price:15}.
 	Our work highlights the benefits and challenges arising from an architecture-independent analysis of memory-based program characteristics.
-	We propose two new metrics to AIWC to better characterize these memory-based optimizations.
+	We propose two new metrics for AIWC to better characterize these memory-based optimizations.
 	We measure the presented codes using the new metrics and demonstrate the metrics' effectiveness in capturing the essence of the optimizations performed.
 	
 	The structure of this paper is as follows.
 	In section~\ref{motivating example} we use the example of matrix multiplication on a GPU to showcase the specific vendor-recommended optimizations our work aims to measure.
 	In section~\ref{related work} we discuss how AIWC and its precursors profiled memory access patterns in an architecture-independent fashion and also consider relevant architecture-dependent approaches to memory access profiling.
-	In section \ref{method} we consider non-parallel memory metrics collected by the architecture-independent workload characterization tool and evaluate the suitability of these metrics for capturing the impact of performance optimizations to various OpenCL codes.
-	In section~\ref{discussion} we discuss these preliminary results, and propose and implement our parallel spatial locality metric into the AIWC framework.
-	In section~\ref{results} we present the collected metric for the matrix multiplication kernels and selected OpenDwarfs benchmarks to validate our methodology in this paper.
+	In section \ref{method} we consider non-parallel memory metrics collected by AIWC and evaluate the suitability of these metrics for capturing the impact of performance optimizations to various OpenCL codes.
+	In section~\ref{discussion} we propose a new parallel spatial locality metric and implement it in the AIWC framework.
+	In section~\ref{results} we present the collected metric for selected benchmarks from the Extended OpenDwarfs benchmark suite to validate our methodology in this paper.
 	Finally, in section~\ref{future work} we discuss further avenues to extend our work and conclude.
 	
 	\section{Motivating Example} \label{motivating example}
@@ -516,14 +516,14 @@
 	Such programs will perform better on GPUs, as they will make better use of both global memory access coalescing and shared memory bank structures.
 	To a lesser extent, the proposed metric reflects performance-critical memory access patterns on CPUs, as pulling a single cache line from global memory into last-level cache may improve memory access times for all CPU cores.
 	
-	\section{Results} \label{results}
-	
-	In figure \ref{fig: matmul parallel spatial locality} we see the proposed parallel spatial locality metric obtained using the AIWC tool for each of the matrix multiplication kernels from section \ref{motivating example}.
+	Figure~\ref{fig: matmul parallel spatial locality} shows the proposed parallel spatial locality metric as measured by AIWC for each of the matrix multiplication kernels from section~\ref{motivating example}.
 	We observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest reductions in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses.
 	It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simple}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of local memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs.
 	Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels.
 	It accurately depicts a steeper reduction for the more optimized \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels.
 	This is a significant improvement over the state-of-the-art AIWC metrics in characterizing how codes localize simultaneous memory accesses to better use the hardware provided.
+	
+	\section{Evaluation: Extended OpenDwarfs Benchmark Suite} \label{results}
 	
 	The Extended OpenDwarfs benchmark suite~\cite{johnston18opendwarfs, krommydas2016opendwarfs} is a set of diverse OpenCL workloads.
 	Each benchmark is assigned to one of the 13 Berkeley Dwarfs, common computational and communication patterns which aim to capture the landscape of parallel computing workloads \cite{asanovic2006landscape}. 
