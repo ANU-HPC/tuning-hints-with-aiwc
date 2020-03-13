@@ -194,7 +194,7 @@
 		BSub[localRow][localCol] = B[tiledCol];
 	\end{lstlisting}
 	
-	
+	\begin{comment}
 	\subsection{Alignment of Memory Allocation}
 	
 	Memory access alignment is important to best utilize all parts of GPU memory architecture. Global memory buffer alignment can allow threads to access blocks of global memory aligned to the nearest cache line. This enables coalescing of memory accesses. If buffers are misaligned, parallel memory requests may cross over cache lines, and may double the number of slow global memory accesses needed as demonstrated in figures \ref{fig: Simple memory alignment} and \ref{fig: Simple memory misalignment}.
@@ -218,7 +218,7 @@
 		__local float aTile[TILE_DIM][TILE_DIM] __attribute__ ((aligned(4096)));
 		__local float bTile[TILE_DIM][TILE_DIM] __attribute__ ((aligned(4096)));
 	\end{lstlisting}
-	
+	\end{comment}
 	All the examples above are an incomplete listing of optimization strategies developers can apply to code targeted at NVIDIA GPUs.
 	In section~\ref{method}, we will compare the collected AIWC metrics with the expected effect of each optimization to examine how effectively our methodology uncovers underlying bottlenecks and guides optimization efforts.
 	
@@ -257,9 +257,11 @@
 	Replicating the CuMAPz framework for all target architectures is challenging.
 	However, CuMAPz is an interesting simulator from the standpoint of this paper's work since it adheres to the core parts of NVIDIA GPUs' memory models in its analysis, while allowing the user to specify their GPU model specific hardware information.
 	
+	%TODO: Are we making our work sound too much like CuMAPz? This is of course not true and we should fix Reviewer 2's confusion as to what we are doing differently.
+	
 	Our approach is an architecture-independent analysis of memory access patterns to provide metrics correlating to similar performance critical memory access optimizations as CuMAPz.
 	We aim to further the state of the art by providing a framework to guide developers in optimizing OpenCL codes for any given target architecture.
-	To the best our knowledge, none of the previous works presents a set of performance metrics that accurately characterize memory access patterns of parallel applications independent of the target architecture.
+	To the best of our knowledge, none of the previous works presents a set of performance metrics that accurately characterize memory access patterns of parallel applications independent of the target architecture.
 	
 	The Architecture-Independent Workload Characterization (AIWC) tool \cite{beauaiwc} collects a set of instruction set architecture (ISA)-independent features based on those identified by Shao and Brooks \cite{shao2013isa}.
 	AIWC runs as a plugin to the Oclgrind~\cite{price:15} framework, which simulates OpenCL kernel execution on an ideal device according to the OpenCL execution and memory models.
@@ -288,7 +290,7 @@
 			\centering
 			\begin{tikzpicture}
 			\begin{axis}[symbolic x coords={simple,coalA,coalAB,coalABT,alignABT},
-			xtick={simple,coalA,coalAB,coalABT,alignABT},
+			xtick={simple,coalA,coalAB,coalABT},%alignABT},
 			xticklabel style={text height=2ex},
 			ymin=0,
 			ylabel={Execution time (ms)}, xlabel={Kernel},
@@ -302,22 +304,22 @@
 				(coalA,.019)
 				(coalAB,.020)
 				(coalABT,.018)
-				(alignABT,.018)
+				%(alignABT,.018)
 			};
 			\addplot coordinates {%[mark=star] coordinates {
 				(simple,.325)
 				(coalA,.075)
 				(coalAB,.081)
 				(coalABT,.055)
-				(alignABT,.055)
+				%(alignABT,.055)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
 		}
 		\subfloat{
 			\begin{tikzpicture}
-			\begin{axis}[symbolic x coords={simple,coalA,coalAB,coalABT,alignABT},
-			xtick={simple,coalA,coalAB,coalABT,alignABT},
+			\begin{axis}[symbolic x coords={simple,coalA,coalAB,coalABT},%alignABT},
+			xtick={simple,coalA,coalAB,coalABT},%alignABT},
 			xticklabel style={text height=2ex},
 			ymin=0,
 			ylabel={Execution time (ms)}, xlabel={Kernel},
@@ -332,14 +334,14 @@
 				(coalA,8.783)
 				(coalAB,9.238)
 				(coalABT,5.307)
-				(alignABT,5.272)
+				%(alignABT,5.272)
 			};
 			\addplot [mark=star] coordinates {%[mark=square] coordinates {
 				(simple,130.682)
 				(coalA,28.602)
 				(coalAB,27.939)
 				(coalABT,16.179)
-				(alignABT,16.071)
+				%(alignABT,16.071)
 			};	
 			\end{axis}
 			\end{tikzpicture} 
@@ -371,13 +373,13 @@
 	\centering
 	\begin{tabular}[t]{lrrrrr}
 		\toprule
-		& simple & coalescedA & coalescedAB & coalescedABT & alignedABT \\ \midrule 
-		Total memory footprint        & 196608 & 196608     & 196608      & 196608       & 196608     \\ %\hline
-		90\% Memory Footprint         & 118196 & 56176      & 489         & 489          & 489        \\ %\hline
-		Global MAE                    & 17.02  & 13.18      & 9.78        & 9.78         & 9.78       \\ %\hline
-		LMAE \#bits=3                 & 16.02  & 12.18      & 8.78        & 8.78         & 8.78       \\ %\hline
-		LMAE \#bits=10                & 9.02   & 5.18       & 1.78        & 1.78         & 1.78       \\ %\hline
-		Relative Local Memory Usage   & 0      & 0.50       & 0.94       &  0.94         & 0.94      \\ \bottomrule
+		& simple & coalescedA & coalescedAB & coalescedABT \\ \midrule %& alignedABT \\ \midrule 
+		Total memory footprint        & 196608 & 196608     & 196608      & 196608      \\ %\hline
+		90\% Memory Footprint         & 118196 & 56176      & 489         & 489         \\ %\hline
+		Global MAE                    & 17.02  & 13.18      & 9.78        & 9.78        \\ %\hline
+		LMAE \#bits=3                 & 16.02  & 12.18      & 8.78        & 8.78        \\ %\hline
+		LMAE \#bits=10                & 9.02   & 5.18       & 1.78        & 1.78        \\ %\hline
+		Relative Local Memory Usage   & 0      & 0.50       & 0.94       &  0.94        \\ \bottomrule
 	\end{tabular}
 	\caption{Selection of AIWC\cite{beauaiwc} metrics for 256 $\times$ 256 matrix multiplication}
 	\label{matmul aiwc table}
@@ -393,7 +395,11 @@
 	
 	\textit{Memory Footprint}: Similar to trends in global and local MAE, we find that the ratio of 90\% memory footprint to total memory footprint decreases from $60.12\%$ for \texttt{simple} to $0.25\%$ (\texttt{coalescedAB}). Increased utilization of local memory in the optimized kernels means that the local memory buffers make up a greater proportion of total memory accesses in the program. As the local memory buffers are small and reused within a workgroup, the memory footprint of the local memory buffers is also smaller. 
 	
-	AIWC's metrics strongly reward optimizations that tend to localize memory accesses. Local memory buffers are typically smaller than global memory arrays when programming for GPUs due to hardware limitations on sizes of shared memory \cite{cudamanual}. However, the metrics currently measured by AIWC do not have a direct causal relation to code patterns that optimize memory accesses on GPUs. The proposed relative local memory usage metric is the first to correspond to a recommended optimization strategy of using fast on-chip shared memory. Further, we find that all current AIWC metrics do not measure any sizeable difference between \texttt{coalescedAB}, \texttt{coalescedABT} and \texttt{alignedABT} codes.
+	AIWC's metrics strongly reward optimizations that tend to localize memory accesses. 
+	Local memory buffers are typically smaller than global memory arrays when programming for GPUs due to hardware limitations on sizes of shared memory \cite{cudamanual}. 
+	However, the metrics currently measured by AIWC do not have a direct causal relation to code patterns that optimize memory accesses on GPUs. 
+	The proposed relative local memory usage metric is the first to correspond to a recommended optimization strategy of using fast on-chip shared memory. 
+	Further, we find that all current AIWC metrics do not measure any sizeable difference between \texttt{coalescedAB} and \texttt{coalescedABT} codes.%and \texttt{alignedABT} codes.
 	We address this by proposing another new metric for locality of memory accesses in the following section.
 	
 	\section{A Parallel Spatial Locality Metric} \label{discussion}
@@ -423,7 +429,7 @@
 		ylabel={$n$-bits dropped Parallel Spatial Locality}, xlabel={\# of bits skipped},
 		ylabel style={at={(axis description cs:0.05,.5)},anchor=south},
 		legend entries={\texttt{simple},\texttt{coalescedA},
-			\texttt{coalescedAB}, \texttt{coalescedABT}, \texttt{alignedABT}},
+			\texttt{coalescedAB}, \texttt{coalescedABT}},%\texttt{alignedABT}},
 		legend style={at={(0.55,0.75)},anchor=west}
 		]
 		
@@ -470,7 +476,7 @@
 			(10,0.1854)
 		};
 		
-		\addplot [mark=*, color=red] coordinates {%[mark=square] coordinates {
+		\addplot coordinates {%[mark=square] coordinates {
 			(0,4.145)
 			(1,4.145)
 			(2,4.145)
@@ -484,19 +490,6 @@
 			(10,0.1854)
 		};
 		
-		\addplot coordinates {%[mark=o] coordinates {
-			(0,4.145)
-			(1,4.145)
-			(2,4.145)
-			(3,3.2)
-			(4,2.254)
-			(5,1.308)
-			(6,0.3621)
-			(7,0.318)
-			(8,0.2738)
-			(9,0.2296)	
-			(10,0.1854)
-		};
 		\end{axis}
 		\end{tikzpicture}
 		\caption{Parallel spatial locality metric obtained from AIWC for matrix multiply kernels for 256 $\times$ 256 matrix multiplication}
@@ -525,8 +518,8 @@
 	To a lesser extent, the proposed metric reflects performance-critical memory access patterns on CPUs, as pulling a single cache line from global memory into last-level cache may improve memory access times for all CPU cores.
 	
 	Figure~\ref{fig: matmul parallel spatial locality} shows the proposed parallel spatial locality metric as measured by AIWC for each of the matrix multiplication kernels from section~\ref{motivating example}.
-	We observe that the \texttt{coalescedABT} and \texttt{alignedABT} kernels have the steepest reductions in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses.
-	It is expected for these kernels to exhibit better parallel spatial locality than \texttt{simple}, as \texttt{coalescedABT} and \texttt{alignedABT} make use of local memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs.
+	We observe that the \texttt{coalescedABT} kernel has the steepest reductions in entropy as the number of bits skipped is increased, which correlates to better locality of parallel memory accesses.
+	It is expected for this kernel to exhibit better parallel spatial locality than \texttt{simple}, as \texttt{coalescedABT} makes use of local memory, where accesses tend to be localized simply due to the small size of shared on-chip memory typically available on GPUs.
 	Further we find that the proposed metric successfully distinguishes between the \texttt{coalescedAB} and \texttt{coalescedABT} kernels.
 	It accurately depicts a steeper reduction for the more optimized \texttt{coalescedABT} kernel, where a larger proportion of parallel memory accesses make better use of the memory bank structure of GPU shared memory than all previous kernels.
 	This is a significant improvement over the state-of-the-art AIWC metrics in characterizing how codes localize simultaneous memory accesses to better use the hardware provided.
@@ -562,148 +555,145 @@
 			\texttt{CSR}, \texttt{BFS Kernel 1}, \texttt{BFS Kernel 2}, \texttt{LUD Diagonal}, \texttt{LUD Perimeter}, \texttt{LUD Internal}},
 		legend style={at={(0.5,-0.15)},anchor=north}
 		]
-		
-		
+	
 		\addplot coordinates {%[mark=*] coordinates {
-			(0, 0.1139)
-			(1, 0.1139)
-			(2, 0.1139)
-			(3, 0.0989)
-			(4, 0.08402)
-			(5, 0.06914)
-			(6, 0.05431)
-			(7, 0.03938)
-			(8, 0.02442)
-			(9, 0.0124)
-			(10, 0.00038)
+			(0, 0.08604)
+			(1, 0.08604)
+			(2, 0.08604)
+			(3, 0.07516)
+			(4, 0.06431)
+			(5, 0.05346)
+			(6, 0.04262)
+			(7, 0.03176)
+			(8, 0.021250)
+			(9, 0.01073)
+			(10, 0.000218)
 		};
-		
 		
 		\addplot coordinates {%[mark=star] coordinates {
-			(0, 2.175)
-			(1, 2.175)
-			(2, 2.175)
-			(3, 2.175)
-			(4, 2.175)
-			(5, 2.175)
-			(6, 2.175)
-			(7, 2.175)
-			(8, 2.175)
-			(9, 2.175)
-			(10, 2.175)
+			(0, .5315)
+			(1, .5315)
+			(2, .5315)
+			(3, .5315)
+			(4, .5315)
+			(5, .5315)
+			(6, .5315)
+			(7, .5315)
+			(8, .5315)
+			(9, .5315)
+			(10, .5315)
+		};
+		
+		\addplot coordinates {%[mark=star] coordinates {
+			(0, .8963)
+			(1, .8963)
+			(2, .8963)
+			(3, .7871)
+			(4, .6768)
+			(5, .5663)
+			(6, .4557)
+			(7, .4521)
+			(8, .4503)
+			(9, .4494)
+			(10, .4489)
 		};
 		
 		\addplot coordinates {%[mark=*] coordinates {
-			(0, 7.176)
-			(1, 7.176)
-			(2, 7.176)
-			(3, 6.301)
-			(4, 5.418)
-			(5, 4.533)
-			(6, 3.648)
-			(7, 3.619)
-			(8, 3.605)
-			(9, 3.598)
-			(10, 3.594)
+			(0, .8866)
+			(1, .8866)
+			(2, .8866)
+			(3, .7773)
+			(4, .6675)
+			(5, .5576)
+			(6, .4476)
+			(7, .4456)
+			(8, .4446)
+			(9, .4441)
+			(10, .4439)
 		};
-		
-		
-		\addplot coordinates {%[mark=star] coordinates {
-			(0, 7.097)
-			(1, 7.097)
-			(2, 7.097)
-			(3, 6.223)
-			(4, 5.344)
-			(5, 4.464)
-			(6, 3.583)
-			(7, 3.567)
-			(8, 3.559)
-			(9, 3.554)
-			(10, 3.553)
-		};
-		
+	
 		\addplot coordinates {%[mark=triangle*] coordinates {
-			(0, 9.605)
-			(1, 9.605)
-			(2, 9.605)
-			(3, 9.478)
-			(4, 9.293)
-			(5, 9.049)
-			(6, 8.761)
-			(7, 8.447)
-			(8, 8.12)
-			(9,7.233)
-			(10,6.287)
+			(0, .9605)
+			(1, .9605)
+			(2, .9605)
+			(3, .9478)
+			(4, .9293)
+			(5, .9049)
+			(6, .8761)
+			(7, .8447)
+			(8, .812)
+			(9,.7233)
+			(10,.6287)
 		};
 
 		\addplot coordinates { %[mark=square] coordinates {
-			(0,4.933)	
-			(1,4.933)
-			(2,4.933)
-			(3,4.89)
-			(4,4.795)
-			(5,4.652)
-			(6,4.456)
-			(7,4.215)
-			(8,3.93)
-			(9,3.608)
-			(10,3.253)
+			(0, .6163)	
+			(1, .6163)
+			(2, .6163)
+			(3, .6109)
+			(4, .599)
+			(5, .5812)
+			(6, .5567)
+			(7, .5266)
+			(8, .491)
+			(9, .4508)
+			(10, .4064)
 		};		
 	
 		\addplot coordinates { %[mark=square] coordinates {
-			(0,4.691)
-			(1,4.691)
-			(2,4.691)
-			(3,4.276)
-			(4,3.760)
-			(5,3.171)
-			(6,2.552)
-			(7,1.922)
-			(8,1.286)
-			(9,0.648)
-			(10,0.00776)
+			(0,.5859)
+			(1,.5859)
+			(2,.5859)
+			(3,.5341)
+			(4,.4696)
+			(5,.3961)
+			(6,.3188)
+			(7,.2401)
+			(8,.1607)
+			(9,.08088)
+			(10,.004861)
+		};
+		
+		\addplot coordinates { %[mark=star] coordinates {
+			(0,.3787)
+			(1,.3787)
+			(2,.3787)
+			(3,.3192)
+			(4,.2671)
+			(5,.2296)
+			(6,.2152)
+			(7,.2152)
+			(8,.2152)
+			(9,.2152)
+			(10,.2152)
 		};
 		
 		\addplot coordinates { %[mark=o] coordinates {
-			(0,1.548)
-			(1,1.548)
-			(2,1.548)
-			(3,1.305)
-			(4,1.092)
-			(5,0.9385)
-			(6,0.8796)
-			(7,0.8796)
-			(8,0.8796)
-			(9,0.8796)
-			(10,0.8796)
+			(0,.7538)
+			(1,.7538)
+			(2,.7538)
+			(3,.6885)
+			(4,.6231)
+			(5,.5578)
+			(6,.4925)
+			(7,.4925)
+			(8,.4925)
+			(9,.4925)
+			(10,.4925)
 		};
 	
-	    \addplot coordinates { %[mark=star] coordinates {
-	    	(0,3.803)
-	    	(1,3.803)
-	    	(2,3.803)
-	    	(3,3.473)
-	    	(4,3.144)
-	    	(5,2.814)
-	    	(6,2.485)
-	    	(7,2.485)
-	    	(8,2.485)
-	    	(9,2.485)
-	    	(10,2.485)
-    	};
-   
    		\addplot coordinates { %[mark=square*] coordinates {
-   			(0,4.101)
-   			(1,4.101)
-   			(2,4.101)
-   			(3,3.589)
-   			(4,3.077)
-   			(5,2.565)
-   			(6,2.053)
-   			(7,2.053)
-   			(8,2.053)
-   			(9,2.053)
-   			(10,2.053)
+   			(0,.5115)
+   			(1,.5115)
+   			(2,.5115)
+   			(3,.4477)
+   			(4,.3838)
+   			(5,.3200)
+   			(6,.2561)
+   			(7,.2561)
+   			(8,.2561)
+   			(9,.2561)
+   			(10,.2561)
    		};
 	
 		\end{axis}
@@ -732,9 +722,6 @@
 	This is reflected in the drop in parallel spatial locality for the LUD kernels to approximately half the value at 0 bits skipped. Taking \texttt{LUD internal} as an example, the 0-bits skipped parallel spatial locality metric is 4.101, while the 10-bits skipped parallel spatial locality metric is 2.053. 
 	The swift decline of the metric to 2.053 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localized. This occurs when work-items simultaneously access contiguous memory along a matrix row. 
 	Similar to the presented matrix multiply codes, LUD can be optimized for GPUs by effective utilization of shared memory \cite{opendwarfs2020head}.
-	
-	%The use of creates imbalanced workload and divergent control flow within work-items in each kernel iteration. While the presence of conditional statements cause some thread divergence in the LUD diagonal kernel, the use of barriers following conditional statements synchronizes the threads. LUD diagonal and perimeter kernels , while LUD.
-	%TODO: Divergence in the kernels. Make a diagram/code simplification for LUD.
 	
 	\subsection{Dynamic Programming: Needleman-Wunsch (NW)}
 	
@@ -780,9 +767,43 @@
 	Similar to BFS, this means memory access patterns are runtime-dependent due to indirect addressing.
 	This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The collected parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the gradual decline in parallel spatial locality as the number of bits dropped is increased.
 	
+	\section{Guidelines: Using the Parallel Spatial Locality Metric}
+	
+	-- Notes
+	
+	 GEM: The recorded parallel spatial locality approaches the theoretical limit of 0 (0.0124 at 10 bits dropped). This indicates that almost all memory accesses made by the kernel are perfectly synchronized between OpenCL threads.
+	 
+	 LUD: Codes with a mix of favourable and unfavourable access patterns (typically both dimensions of matrices) will have a steep dropoff to ~0.5 of the starting PSL metric, and flattens out at that point.
+	 
+	%TODO: Compile list of guidelines
+	
+	
+	\begin{comment}
+	\section{Predicting OpenCL Kernel Performance using AIWC}
+	
+	\begin{comment}
+	- AIWC performance prediction paper
+	- Important for workload schedulers and compiler writers.
+	- Used in this paper to demonstrate PSL is inherently linked to performance-prediction.
+	
+	-- Methodology:
+		- Leave-one-out predictive accuracy
+		- CLgen?
+			- intro
+			- use to generate kernels for performance prediction	
+	
+	In~\cite{beauperformanceprediction} we show that AIWC features can be used to build performance prediction models for the runtime of OpenCL codes on diverse heterogeneous platforms.
+	This is useful for workload schedulers at supercomputer facilities and compiler engineers who must predict performance of codes on architectures without gathering performance data directly.
+	In this paper, we test whether the implemented parallel spatial locality metric is linked to code performance by building a predictive model
+	
+	- Used random forest model (ranger).
+		
+	- 
+	\end{comment}
+	
 	\section{Conclusions and Future Work} \label{future work}
 	
-	To the best of our knowledge, this work is the first to propose the use of architecture-independent metrics of parallel memory access to guide hardware-specific optimization. 
+	To the best of our knowledge, this work is the first to propose the use of architecture-independent metrics of parallel memory access to characterise hardware-specific optimization. 
 	We implemented and evaluated a new feature, relative local memory usage, to help characterize memory-based GPU code optimizations.
 	We also implemented a new parallel spatial locality metric to capture the idea of closeness of memory accesses made by parallel OpenCL workloads.
 	We ran the enhanced AIWC tool on matrix multiply kernels and selected OpenDwarfs benchmarks, presenting results and analysis to validate our methodology. 
@@ -792,7 +813,7 @@
 	Our proposed parallel spatial locality metric may also correlate to some memory-based optimization strategies for CPUs. 
 	Future work would apply the approach followed by this paper to optimizations for CPU and FPGA architectures to critically evaluate the viability of AIWC in analyzing memory access patterns in codes targeted to these architectures.
 	
-	While our work in this paper intended to guide optimization efforts, another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _guiding optimization_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay in this paragraph?
+	While our work in this paper intended to guide optimization efforts, another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _characterising optimization_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay in this paragraph?
 	
 	\bibliographystyle{plain}
 	\bibliography{bib/bibliography.bib}
