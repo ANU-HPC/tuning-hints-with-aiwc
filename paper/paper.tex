@@ -23,6 +23,7 @@
 \author{Beau Johnston}
 \email{beau.johnston@anu.edu.au}
 \affiliation{%
+	\institution{Oak Ridge National Laboratory}
 	\institution{Australian National University}}
 
 %\acmVolume{10} %TODO
@@ -163,7 +164,7 @@
 	\subsection{Simple Unoptimized Matrix Multiplication}
 	
 	The unoptimized matrix multiplication kernel presented in Appendix~\ref{simpleMultiply} is used as a baseline to validate the performance improvements measured from each following optimization.
-	Each thread of the kernel updates the $(globalRow, globalCol)$ element of matrix $C$ by computing the dot product of the corresponding row of $A$ and column of $B$.
+	Each thread of the kernel updates the $(globalRow, globalCol)$ element of matrix $C$ by computing the dot product of the corresponding row of $A$ and column of $B$. With square matrices of order $2048$, we observe an effective performance of 131 GFLOP/s on an NVIDIA Tesla P100 GPU.
 	
 	\subsection{Using Shared Memory to Coalesce Global Memory Access to Matrix A} 
 	
@@ -173,6 +174,7 @@
 	Multiple global memory loads and stores are coalesced into a single transaction when certain device-specific conditions are met. 
 	On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache line in global memory~\cite{cudamanual}.
 	Appendix~\ref{coalescedAMultiply} contains the \texttt{coalescedA} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory (OpenCL \texttt{\_\_local} memory). 
+	We see an improvement to 600 GFLOP/s is effective performance for order 2048 matrix multiplication.
 	
 	% 9.2.1.2: Misaligned access pattern
 	
@@ -182,6 +184,7 @@
 	While in the previous kernel each thread reads only a single element of matrix $A$ from global memory, each thread reads a full column of matrix $B$.
 	The repeated reads of elements of matrix $B$ can be shared between threads in a work group by reading tiles from matrix $B$ into shared memory.
 	Appendix~\ref{coalescedABMultiply} contains the \texttt{coalescedAB} kernel which performs this optimization.
+	Performance is further improved to 614 GLOP/s after shared memory optimisation for Matrix B.
 	
 	\subsection{Optimizing Handling of Shared Memory} 
 	
@@ -193,6 +196,8 @@
 		ASub[localCol][localRow] = A[tiledRow];
 		BSub[localRow][localCol] = B[tiledCol];
 	\end{lstlisting}
+	
+	We achieve 1061 GFLOP/s after applying all the recommended GPU memory optimisations to the simple matrix multiply kernel.
 	
 	\begin{comment}
 	\subsection{Alignment of Memory Allocation}
@@ -330,17 +335,17 @@
 			]
 			
 			\addplot [mark=*, color=brown] coordinates {%[mark=triangle*] coordinates {
-				(simple,46.920)
-				(coalA,8.783)
-				(coalAB,9.238)
-				(coalABT,5.307)
+				(simple,46.920) %118.94
+				(coalA,8.783) %635.39
+				(coalAB,9.238) %	604.10
+				(coalABT,5.307) %404.45356548
 				%(alignABT,5.272)
 			};
 			\addplot [mark=star] coordinates {%[mark=square] coordinates {
-				(simple,130.682)
-				(coalA,28.602)
-				(coalAB,27.939)
-				(coalABT,16.179)
+				(simple,130.682) %131.431
+				(coalA,28.602) %600.506
+				(coalAB,27.939) %614.75
+				(coalABT,16.179) %1061.60
 				%(alignABT,16.071)
 			};	
 			\end{axis}
@@ -503,7 +508,7 @@
 	
 	\textit{Calculate}: for each timestamp $t = t_0 .. t_{last}$, calculate the $n$-bits-dropped entropy of memory addresses accessed by all threads in a work group within the timestamp $t$. Here $n$ can range between 0 and 10 as was the case for $LMAE$.
 	
-	\textit{Summarize}: average the collected entropy values across all the timestamps to calculate the parallel spatial locality metrics for one thread group. We then average the $n$-bits-dropped entropy summaries across thread groups to obtain the $n$-bits-dropped parallel spatial locality metrics for the kernel's execution.
+	\textit{Summarize}: average the collected entropy values across all the timestamps to calculate the parallel spatial locality metrics for one thread group. We then average the $n$-bits-dropped entropy summaries across thread groups to obtain the $n$-bits-dropped parallel spatial locality metrics for the kernel's execution. The theoretical maximum for an $n$-bits dropped parallel spatial locality value is $\log_2(group\_size)$. We divide the calculated average entropy values by $\log_2 (group\_size)$ to normalise the parallel spatial locality metric. This allows us to derive trends on the normalised metrics allowing comparison across separate OpenCL codes with different work distribution structures.
 	
 %	\begin{equation} \label{entropyaverage}
 %		\log_2(\frac{\sum_{t = t_0}^{t_{last}} 2^{E_{n,t}}}{\#{timestamps}})
@@ -698,7 +703,7 @@
 	
 		\end{axis}
 		\end{tikzpicture}
-		\caption{Parallel spatial locality metric for selected OpenDwarfs benchmark kernels}
+		\caption{Normalised parallel spatial locality metric for selected OpenDwarfs benchmark kernels}
 		\label{fig: opendwarfs parallel spatial locality}
 	\end{figure*}
 
@@ -719,8 +724,8 @@
 	
 	The LUD kernels partially benefit from memory access coalescing on GPUs, for the lines of code where all the work-items access contiguous memory along a row of the input matrix. 
 	However, when threads simultaneously access a column of the input matrix, multiple memory requests are made as addresses accessed are too distant to be coalesced into a single memory transaction on GPUs. 
-	This is reflected in the drop in parallel spatial locality for the LUD kernels to approximately half the value at 0 bits skipped. Taking \texttt{LUD internal} as an example, the 0-bits skipped parallel spatial locality metric is 4.101, while the 10-bits skipped parallel spatial locality metric is 2.053. 
-	The swift decline of the metric to 2.053 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localized. This occurs when work-items simultaneously access contiguous memory along a matrix row. 
+	This is reflected in the drop in parallel spatial locality for the LUD kernels to approximately half the value at 0 bits skipped. Taking \texttt{LUD internal} as an example, the 0-bits skipped parallel spatial locality metric is 0.5115, while the 10-bits skipped parallel spatial locality metric is 0.2561. 
+	The swift decline of the metric to 0.2561 from 2 to 6-bits skipped parallel spatial locality indicates that approximately half the parallel memory accesses in \texttt{LUD internal} are highly localized. This occurs when work-items simultaneously access contiguous memory along a matrix row. 
 	Similar to the presented matrix multiply codes, LUD can be optimized for GPUs by effective utilization of shared memory \cite{opendwarfs2020head}.
 	
 	\subsection{Dynamic Programming: Needleman-Wunsch (NW)}
@@ -769,14 +774,18 @@
 	
 	\section{Guidelines: Using the Parallel Spatial Locality Metric}
 	
-	-- Notes
-	
-	 GEM: The recorded parallel spatial locality approaches the theoretical limit of 0 (0.0124 at 10 bits dropped). This indicates that almost all memory accesses made by the kernel are perfectly synchronized between OpenCL threads.
+	 The recorded parallel spatial locality in GEM starts at a low value of 0.08604 and approaches the theoretical lower limit of 0 (2.18e-4 at 10 bits dropped). This indicates that almost all memory accesses made by the kernel are perfectly synchronized between OpenCL threads. From a memory performance standpoint, this is the best possible scenario as single memory accesses service all the active synchronised threads on the GPU.
 	 
-	 LUD: Codes with a mix of favourable and unfavourable access patterns (typically both dimensions of matrices) will have a steep dropoff to ~0.5 of the starting PSL metric, and flattens out at that point.
+	 Codes with a mix of favourable and unfavourable access patterns (typically involving two-dimensional matrices such as LUD and SRAD) will have a steep dropoff in PSL to about half of the starting PSL metric as $n$ increases, and the curve flattens out at that point.
+	 
+	 In the extreme case, when parallel memory accesses are entirely disparate as for Needleman-Wuntsch, we observe a flat parallel spatial locality graph. 
+	 The worst possible memory access pattern: all threads in a workgroup accessing results in a flat PSL metric of 1. 
+	 The PSL metric for Needleman-Wuntsch is a flat line at 0.53. This indicates that parallel memory accesses are entirely disparate. 
+	 However, the workload imbalance across threads in each OpenCL work group eases pressure on the memory unit when not all threads are active.
+	 
+	 Codes with irregular or data-driven memory access patterns like CSR and BFS in the OpenDwarfs Suite have a slow dropoff in the PSL metric at low $n$ values. This is reflective of the mostly disparate parallel memory access pattern in these codes. The increasing steepness of the dropoff at higher $n$ in codes with data-driven memory accesses is reflective of the size of buffers being operated upon as the data structures used during computation cause localisation of memory accesses.
 	 
 	%TODO: Compile list of guidelines
-	
 	
 	\begin{comment}
 	\section{Predicting OpenCL Kernel Performance using AIWC}
@@ -813,7 +822,7 @@
 	Our proposed parallel spatial locality metric may also correlate to some memory-based optimization strategies for CPUs. 
 	Future work would apply the approach followed by this paper to optimizations for CPU and FPGA architectures to critically evaluate the viability of AIWC in analyzing memory access patterns in codes targeted to these architectures.
 	
-	While our work in this paper intended to guide optimization efforts, another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _characterising optimization_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay in this paragraph?
+	%While our work in this paper intended to guide optimization efforts, another potential use case for AIWC is providing architecture-independent performance predictions for OpenCL kernels by generating machine learning models based on AIWC metrics \cite{beauperformanceprediction}.  Future work would modify the presented metrics and develop new memory metrics with the specific intent of being fed to machine learning models to predict kernel performance on arbitrary and novel architectures. %FIXME: I want to say that we have been focusing on _characterising optimization_. We can do more work in making the AIWC metrics better for _performance prediction_. Is this coming across okay in this paragraph?
 	
 	\bibliographystyle{plain}
 	\bibliography{bib/bibliography.bib}

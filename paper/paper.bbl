@@ -1,0 +1,118 @@
+\begin{thebibliography}{10}
+
+\bibitem{opendwarfs2020head}
+{Extended OpenDwarfs}.
+\newblock
+  \url{https://github.com/ANU-HPC/OpenDwarfs/commit/dee488cac9833f029dfada35ff6ae4077b68c4b5},
+  Jan 2020.
+
+\bibitem{asanovic2006landscape}
+Krste Asanovic, Ras Bodik, Bryan~Christopher Catanzaro, Joseph~James Gebis,
+  Parry Husbands, Kurt Keutzer, David~A Patterson, William~Lester Plishker,
+  John Shalf, Samuel~Webb Williams, et~al.
+\newblock The landscape of parallel computing research: A view from berkeley.
+\newblock Technical report, Technical Report UCB/EECS-2006-183, EECS
+  Department, University of California, Berkeley, 2006.
+
+\bibitem{ganesan2008performance}
+Karthik Ganesan, Lizy John, Valentina Salapura, and James Sexton.
+\newblock A performance counter based workload characterization on {Blue
+  Gene/P}.
+\newblock In {\em International Conference on Parallel Processing ({ICPP})},
+  pages 330--337. IEEE, 2008.
+
+\bibitem{hennessycomparch}
+John~L. Hennessy and David~A. Patterson.
+\newblock {\em {Computer Architecture - A Quantitative Approach, 5th Edition}}.
+\newblock Morgan Kaufmann, 2012.
+
+\bibitem{hoste2007microarchitecture}
+Kenneth Hoste and Lieven Eeckhout.
+\newblock Microarchitecture-independent {Workload} {C}haracterization.
+\newblock {\em IEEE Micro}, 27(3), 2007.
+
+\bibitem{inteloptimisation}
+{Intel Corporation}.
+\newblock {Intel® 64 and IA-32 Architectures Optimization Reference Manual}.
+\newblock 2016.
+
+\bibitem{beauperformanceprediction}
+Beau Johnston, Gregory Falzon, and Josh Milthorpe.
+\newblock Opencl performance prediction using architecture-independent
+  features.
+\newblock In {\em 2018 International Conference on High Performance Computing
+  {\&} Simulation, {HPCS} 2018, Orleans, France, July 16-20, 2018}, pages
+  561--569. {IEEE}, 2018.
+
+\bibitem{beauaiwc}
+Beau Johnston and Josh Milthorpe.
+\newblock {AIWC:} {OpenCL}-based architecture-independent workload
+  characterization.
+\newblock {\em IEEE/ACM Workshop on the LLVM Compiler Infrastructure in HPC
+  (LLVM-HPC)}, Nov 2018.
+
+\bibitem{johnston18opendwarfs}
+Beau Johnston and Josh Milthorpe.
+\newblock {Dwarfs} on accelerators: Enhancing {OpenCL} benchmarking for
+  heterogeneous computing architectures.
+\newblock In {\em Proceedings of the $47^{th}$ International Conference on
+  Parallel Processing Companion}, ICPP '18, pages 4:1--4:10, New York, NY, USA,
+  2018. ACM.
+
+\bibitem{beau_johnston_2017_1134175}
+Beau Johnston, James Price, Moritz Pflanzer, Petros Kalos, Tom Deakin, Nido
+  Media, and Daniel Saier.
+\newblock {BeauJoh/Oclgrind: Adding AIWC -- An Architecture Independent
+  Workload Characterisation Plugin}.
+\newblock https://doi.org/10.5281/zenodo.1134175, December 2017.
+
+\bibitem{kim2011cumapz}
+Yooseong Kim and Aviral Shrivastava.
+\newblock {CuMAPz}: a tool to analyze memory access patterns in {CUDA}.
+\newblock In Leon Stok, Nikil~D. Dutt, and Soha Hassoun, editors, {\em
+  Proceedings of the 48th Design Automation Conference, {DAC} 2011, San Diego,
+  California, USA, June 5-10, 2011}, pages 128--133. {ACM}, 2011.
+
+\bibitem{krommydas2016opendwarfs}
+Konstantinos Krommydas, Wu-chun Feng, Christos~D Antonopoulos, and Nikolaos
+  Bellas.
+\newblock {OpenDwarfs}: Characterization of dwarf-based benchmarks on fixed and
+  reconfigurable architectures.
+\newblock {\em Journal of Signal Processing Systems}, 85(3):373--392, 2016.
+
+\bibitem{luk2005pin}
+Chi-Keung Luk, Robert Cohn, Robert Muth, Harish Patil, Artur Klauser, Geoff
+  Lowney, Steven Wallace, Vijay~Janapa Reddi, and Kim Hazelwood.
+\newblock Pin: building customized program analysis tools with dynamic
+  instrumentation.
+\newblock In {\em {ACM SIGPLAN} notices}, volume~40, pages 190--200. ACM, 2005.
+
+\bibitem{cudaoptimisation}
+{NVIDIA Corporation}.
+\newblock {CUDA C++ Best Practices Guide}.
+\newblock 2019.
+
+\bibitem{cudamanual}
+{NVIDIA Corporation}.
+\newblock {CUDA C++ Programming Guide}.
+\newblock 2019.
+
+\bibitem{price:15}
+James Price and Simon McIntosh-Smith.
+\newblock Oclgrind: An extensible {OpenCL} device simulator.
+\newblock In {\em Proceedings of the 3rd International Workshop on {OpenCL}},
+  page~12. ACM, 2015.
+
+\bibitem{shao2013isa}
+Yakun~Sophia Shao and David Brooks.
+\newblock {ISA}-independent workload characterization and its implications for
+  specialized architectures.
+\newblock In {\em IEEE International Symposium on Performance Analysis of
+  Systems and Software {(ISPASS)}}, pages 245--255. IEEE, 2013.
+
+\bibitem{spafford2010maestro}
+Kyle Spafford, Jeremy Meredith, and Jeffrey Vetter.
+\newblock Maestro: data orchestration and tuning for {OpenCL} devices.
+\newblock {\em Euro-Par 2010-Parallel Processing}, pages 275--286, 2010.
+
+\end{thebibliography}
