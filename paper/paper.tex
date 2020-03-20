@@ -152,6 +152,7 @@
 	In section \ref{method} we consider non-parallel memory metrics collected by AIWC and evaluate the suitability of these metrics for capturing the impact of performance optimizations to various OpenCL codes.
 	In section~\ref{discussion} we propose a new parallel spatial locality metric, implement it in the AIWC framework, and evaluate it over the matrix multiplication example from section~\ref{motivating example}.
 	In section~\ref{results} we present the collected metric for selected benchmarks from the Extended OpenDwarfs benchmark suite to validate our methodology in this paper.
+	In section~\ref{guidelines} we summarize our findings and present guidelines for interpreting the new parallel spatial metric for OpenCL codes.
 	Finally, in section~\ref{future work} we discuss further avenues to extend our work and conclude.
 	
 	\section{Motivating Example} \label{motivating example}
@@ -174,7 +175,7 @@
 	Multiple global memory loads and stores are coalesced into a single transaction when certain device-specific conditions are met. 
 	On most NVIDIA GPUs, data accesses are coalesced when multiple requests are made for memory locations from the same cache line in global memory~\cite{cudamanual}.
 	Appendix~\ref{coalescedAMultiply} contains the \texttt{coalescedA} kernel, which coalesces accesses to matrix $A$ by storing \emph{tiles}, or square blocks, of $A$'s values into shared memory (OpenCL \texttt{\_\_local} memory). 
-	We see an improvement to 600 GFLOP/s is effective performance for order 2048 matrix multiplication.
+	We see an improvement to 600 GFLOP/s in effective performance for order 2048 matrix multiplication.
 	
 	% 9.2.1.2: Misaligned access pattern
 	
@@ -184,7 +185,7 @@
 	While in the previous kernel each thread reads only a single element of matrix $A$ from global memory, each thread reads a full column of matrix $B$.
 	The repeated reads of elements of matrix $B$ can be shared between threads in a work group by reading tiles from matrix $B$ into shared memory.
 	Appendix~\ref{coalescedABMultiply} contains the \texttt{coalescedAB} kernel which performs this optimization.
-	Performance is further improved to 614 GLOP/s after shared memory optimisation for Matrix B.
+	Performance is further improved to 614 GLOP/s after this optimisation.
 	
 	\subsection{Optimizing Handling of Shared Memory} 
 	
@@ -410,7 +411,7 @@
 	\section{A Parallel Spatial Locality Metric} \label{discussion}
 	
 	Aggregate metrics of the kind presented by AIWC necessarily present a simplified view of program behaviour, omitting many details.
-	Different ways of aggregating program measurements lead to different features of program execution being emphasised in the final metrics.
+	Different ways of aggregating program measurements lead to different features of program execution being emphasized in the final metrics.
 	For example, the calculation of memory address entropy described in section~\ref{related work} relies only on the frequency distribution of memory accesses to all addresses accessed by the kernel, and discards temporal information.
 	The order of sequential memory accesses performed by each thread, as well the relationship between work items in an OpenCL work group, are both vital in accurately characterizing parallel codes.
 
@@ -508,7 +509,7 @@
 	
 	\textit{Calculate}: for each timestamp $t = t_0 .. t_{last}$, calculate the $n$-bits-dropped entropy of memory addresses accessed by all threads in a work group within the timestamp $t$. Here $n$ can range between 0 and 10 as was the case for $LMAE$.
 	
-	\textit{Summarize}: average the collected entropy values across all the timestamps to calculate the parallel spatial locality metrics for one thread group. We then average the $n$-bits-dropped entropy summaries across thread groups to obtain the $n$-bits-dropped parallel spatial locality metrics for the kernel's execution. The theoretical maximum for an $n$-bits dropped parallel spatial locality value is $\log_2(group\_size)$. We divide the calculated average entropy values by $\log_2 (group\_size)$ to normalise the parallel spatial locality metric. This allows us to derive trends on the normalised metrics allowing comparison across separate OpenCL codes with different work distribution structures.
+	\textit{Summarize}: average the collected entropy values across all the timestamps to calculate the parallel spatial locality metrics for one thread group. We then average the $n$-bits-dropped entropy summaries across thread groups to obtain the $n$-bits-dropped parallel spatial locality metrics for the kernel's execution. The theoretical maximum for an $n$-bits dropped parallel spatial locality value is $\log_2(group\_size)$. We divide the calculated average entropy values by $\log_2 (group\_size)$ to normalize the parallel spatial locality metric. This allows us to derive trends on the normalized metrics allowing comparison across separate OpenCL codes with different work distribution structures.
 	
 %	\begin{equation} \label{entropyaverage}
 %		\log_2(\frac{\sum_{t = t_0}^{t_{last}} 2^{E_{n,t}}}{\#{timestamps}})
@@ -772,7 +773,7 @@
 	Similar to BFS, this means memory access patterns are runtime-dependent due to indirect addressing.
 	This pattern of indirect addressing is typical of applications in the Spare Linear Algebra Dwarf, which severely hinders locality of memory accesses performed. The collected parallel spatial locality metric reflects this trend. Figure \ref{fig: opendwarfs parallel spatial locality} shows the gradual decline in parallel spatial locality as the number of bits dropped is increased.
 	
-	\section{Guidelines: Using the Parallel Spatial Locality Metric}
+	\section{Guidelines: Using the Parallel Spatial Locality Metric} \label{guidelines}
 	
 	 The recorded parallel spatial locality in GEM starts at a low value of 0.08604 and approaches the theoretical lower limit of 0 (2.18e-4 at 10 bits dropped). This indicates that almost all memory accesses made by the kernel are perfectly synchronized between OpenCL threads. From a memory performance standpoint, this is the best possible scenario as single memory accesses service all the active synchronised threads on the GPU.
 	 
