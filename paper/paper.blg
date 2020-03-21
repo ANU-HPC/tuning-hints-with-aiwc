@@ -8,45 +8,45 @@ Warning--empty journal in inteloptimisation
 Warning--can't use both volume and number fields in luk2005pin
 Warning--empty journal in cudaoptimisation
 Warning--empty journal in cudamanual
-You've used 18 entries,
+You've used 17 entries,
             2118 wiz_defined-function locations,
-            605 strings with 7787 characters,
-and the built_in function-call counts, 6830 in all, are:
-= -- 677
-> -- 350
-< -- 9
-+ -- 139
-- -- 119
-* -- 446
-:= -- 1097
-add.period$ -- 60
-call.type$ -- 18
-change.case$ -- 111
+            597 strings with 7459 characters,
+and the built_in function-call counts, 6334 in all, are:
+= -- 623
+> -- 332
+< -- 8
++ -- 132
+- -- 113
+* -- 416
+:= -- 1027
+add.period$ -- 56
+call.type$ -- 17
+change.case$ -- 105
 chr.to.int$ -- 0
-cite$ -- 23
-duplicate$ -- 272
-empty$ -- 505
-format.name$ -- 119
-if$ -- 1473
+cite$ -- 22
+duplicate$ -- 249
+empty$ -- 464
+format.name$ -- 113
+if$ -- 1357
 int.to.chr$ -- 0
-int.to.str$ -- 18
-missing$ -- 16
-newline$ -- 92
-num.names$ -- 36
-pop$ -- 140
+int.to.str$ -- 17
+missing$ -- 15
+newline$ -- 87
+num.names$ -- 34
+pop$ -- 132
 preamble$ -- 1
-purify$ -- 93
+purify$ -- 88
 quote$ -- 0
-skip$ -- 217
+skip$ -- 198
 stack$ -- 0
-substring$ -- 348
-swap$ -- 90
-text.length$ -- 9
+substring$ -- 311
+swap$ -- 79
+text.length$ -- 8
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 70
+type$ -- 66
 warning$ -- 5
-while$ -- 59
-width$ -- 20
-write$ -- 198
+while$ -- 54
+width$ -- 19
+write$ -- 186
 (There were 5 warnings)

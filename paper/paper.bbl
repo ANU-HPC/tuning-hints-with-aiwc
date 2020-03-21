@@ -36,14 +36,6 @@ Kenneth Hoste and Lieven Eeckhout.
 \newblock {Intel® 64 and IA-32 Architectures Optimization Reference Manual}.
 \newblock 2016.
 
-\bibitem{beauperformanceprediction}
-Beau Johnston, Gregory Falzon, and Josh Milthorpe.
-\newblock Opencl performance prediction using architecture-independent
-  features.
-\newblock In {\em 2018 International Conference on High Performance Computing
-  {\&} Simulation, {HPCS} 2018, Orleans, France, July 16-20, 2018}, pages
-  561--569. {IEEE}, 2018.
-
 \bibitem{beauaiwc}
 Beau Johnston and Josh Milthorpe.
 \newblock {AIWC:} {OpenCL}-based architecture-independent workload
