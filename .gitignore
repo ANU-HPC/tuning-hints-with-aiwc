@@ -4,3 +4,10 @@
 codes/gpu-stride
 myGEMM
 codes/gpu-strided-rust
+**/texput.log
+**/*.aux
+**/*.bbl
+**/*.blg
+paper/paper.log
+paper/paper.out
+paper/paper.synctex.gz
