@@ -82,7 +82,8 @@ RUN make install
 ENV OCLGRIND_SRC /oclgrind-source
 ENV OCLGRIND /oclgrind
 ENV OCLGRIND_BIN /oclgrind/bin/oclgrind
-RUN git clone https://github.com/ANU-HPC/Oclgrind.git $OCLGRIND_SRC
+#RUN git clone https://github.com/ANU-HPC/Oclgrind.git $OCLGRIND_SRC
+RUN git clone -b tapestry https://github.com/ANU-HPC/Oclgrind.git $OCLGRIND_SRC
 RUN mkdir $OCLGRIND_SRC/build
 WORKDIR $OCLGRIND_SRC/build
 ENV CC clang-5.0
