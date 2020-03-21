@@ -122,8 +122,8 @@
 	High bandwidth interconnects support tight integration between multiple devices of different types on a single compute node.
 	
 	The OpenCL programming language is designed to support modern HPC software engineers in writing code that executes on multiple hardware targets. 
-	%It is possible for an engineer to write highly thread-divergent logical analysis code aimed at traditional CPUs; parallelisable data crunching kernels aimed at GPUs; and code to satisfy specialized computational requirements aimed at FPGAs -- all in a single code base using OpenCL. 
-	%The language provides support for individual \emph{kernels}, portions of parallelisable codes that make up a HPC code base, to be executed independently on diverse hardware targets such as traditional CPUs, GPUs and FPGAs \cite{khronosopenclworkinggroup2011opencl}. 
+	%It is possible for an engineer to write highly thread-divergent logical analysis code aimed at traditional CPUs; parallelizable data crunching kernels aimed at GPUs; and code to satisfy specialized computational requirements aimed at FPGAs -- all in a single code base using OpenCL.
+	%The language provides support for individual \emph{kernels}, portions of parallelizable codes that make up a HPC code base, to be executed independently on diverse hardware targets such as traditional CPUs, GPUs and FPGAs \cite{khronosopenclworkinggroup2011opencl}.
 	This gives HPC software developers greater flexibility by allowing codes aimed at a range of hardware targets to be written in a single programming language environment.
 	
 	Application codes differ in resource requirements, control structure and available parallelism. Similarly, compute devices differ in number and capabilities of execution units, processing model, and available resources.
@@ -737,9 +737,9 @@
 	
 	Needleman-Wunsch is a dynamic programming algorithm used to perform protein sequence alignment by identifying the similarity between two strings of amino acids.
 	The computation of each element in the similarity matrix depends on its west, north and north-west neighbours.
-	This dependency enforces a wave-front computation pattern, travelling along the main diagonal of the matrix. Each iteration of the kernels computes over an antidiagonal of the matrix, starting at its top left corner, and finishing at its bottom right corner.
+	This dependency enforces a wave-front computation pattern, travelling along the main diagonal of the matrix. Each iteration of the kernels computes over an anti-diagonal of the matrix, starting at its top left corner, and finishing at its bottom right corner.
 	
-	In particular, the wavefront pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any drop-off in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs, this translates to poor utilization of both memory access coalescing and caching \cite{krommydas2016opendwarfs}. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests -- this is typically performed in GPU optimized implementations of the Needleman-Wunsch algorithm \cite{opendwarfs2020head}. 
+	In particular, the wave-front pattern of computations causes each work-item to request distant memory addresses in a parallel fashion. Thus, parallel memory requests into the input matrix prohibit locality. We note the lack of any drop-off in parallel spatial locality as the number of bits dropped increases. This rightly indicates that memory addresses accessed at each logical timestamp are very distant. On GPUs, this translates to poor utilization of both memory access coalescing and caching \cite{krommydas2016opendwarfs}. This trend in the parallel spatial locality metric suggests that a possible improvement for GPU performance would be to load blocks of the input matrix into on-chip local memory to reduce the number of global memory requests -- this is typically performed in GPU optimized implementations of the Needleman-Wunsch algorithm \cite{opendwarfs2020head}.
 	
 	\subsection{Structured Grids: Speckle Reducing Anisotropic Diffusion (SRAD)}
 	
@@ -749,8 +749,7 @@
 	Memory access patterns in SRAD are statically determined and relatively localized. 
 	Similar to the LUD and \texttt{simple} kernels, both SRAD kernels observe a rapid drop-off in parallel spatial locality (figure \ref{fig: opendwarfs parallel spatial locality}) as the number of bits skipped is increased, with the metric stabilizing at approximately half its original value when 0 bits are skipped.
 	
-	
-	At each point in the kernels' memory access profile, each work-item with global ID $(i,j)$ in an OpenCL work-group accesses the $(i,j)^{th}$ elements of various matrices. The sequential memory access pattern is non-linear since different matrices are accessed consecutively by the kernel, prohibiting ideal caching \cite{krommydas2016opendwarfs}. However, memory requests made simultaneously by a work-group always fall within a rectangular block of one of the matrices. 
+	At each point in the kernels' memory access profile, each work-item with global ID $(i,j)$ in an OpenCL work-group accesses the $(i,j)^{th}$ elements of various matrices. The sequential memory access pattern is non-linear since different matrices are accessed consecutively by the kernel, prohibiting ideal caching \cite{krommydas2016opendwarfs}. However, memory requests made simultaneously by a work-group always fall within a rectangular block of one of the matrices.
 	This allows memory access coalescing on GPUs for OpenCL work-items accessing contiguous matrix data, greatly reducing the number of memory requests made on each line of the kernel code on GPUs. 
 	However, work-items accessing data along a column of the matrix do not observe memory access coalescing.
 	Thus we observe that while cache hit rates are typically low on this benchmark, particularly on GPUs \cite{krommydas2016opendwarfs}, GPUs can hide the latency of global memory accesses through memory access coalescing to some extent.
